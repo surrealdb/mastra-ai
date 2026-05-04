@@ -1,0 +1,14 @@
+DEFINE TABLE IF NOT EXISTS mastra_workflow_snapshot SCHEMAFULL;
+DEFINE FIELD IF NOT EXISTS id           ON mastra_workflow_snapshot TYPE string;
+DEFINE FIELD IF NOT EXISTS workflowName ON mastra_workflow_snapshot TYPE string;
+DEFINE FIELD IF NOT EXISTS runId        ON mastra_workflow_snapshot TYPE string;
+DEFINE FIELD IF NOT EXISTS resourceId   ON mastra_workflow_snapshot TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS snapshot     ON mastra_workflow_snapshot FLEXIBLE TYPE object;
+DEFINE FIELD IF NOT EXISTS status       ON mastra_workflow_snapshot TYPE option<string>;
+DEFINE FIELD IF NOT EXISTS createdAt    ON mastra_workflow_snapshot TYPE datetime;
+DEFINE FIELD IF NOT EXISTS updatedAt    ON mastra_workflow_snapshot TYPE datetime;
+DEFINE INDEX IF NOT EXISTS idx_workflow_snapshot_unique ON mastra_workflow_snapshot FIELDS workflowName, runId UNIQUE;
+DEFINE INDEX IF NOT EXISTS idx_workflow_name            ON mastra_workflow_snapshot FIELDS workflowName;
+DEFINE INDEX IF NOT EXISTS idx_workflow_status          ON mastra_workflow_snapshot FIELDS status;
+DEFINE INDEX IF NOT EXISTS idx_workflow_run_id          ON mastra_workflow_snapshot FIELDS runId;
+DEFINE INDEX IF NOT EXISTS idx_workflow_created         ON mastra_workflow_snapshot FIELDS createdAt;

@@ -1,0 +1,20 @@
+{
+	"name": "example-basic-agent",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"start": "bun src/index.ts",
+		"dev": "bun --watch src/index.ts"
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "^1.0.0",
+		"@mastra/core": "^1.31.0",
+		"@mastra/surrealdb": "workspace:*",
+		"ai": "^4.0.0"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"typescript": "^5.8.3"
+	}
+}
