@@ -37,19 +37,21 @@ export class SurrealDBClient {
 		}
 
 		if (isUrlConfig(config)) {
-			await this.db.connect(config.url, {
+			await this.db.connect(config.url);
+			await this.db.signin({
+				username: config.username,
+				password: config.password,
+			});
+			await this.db.use({
 				namespace: this.namespace,
 				database: this.database,
-				authentication: {
-					username: config.username,
-					password: config.password,
-				},
 			});
 		} else if (isTokenConfig(config)) {
-			await this.db.connect(config.url, {
+			await this.db.connect(config.url);
+			await this.db.authenticate(config.token);
+			await this.db.use({
 				namespace: this.namespace,
 				database: this.database,
-				authentication: config.token,
 			});
 		}
 
