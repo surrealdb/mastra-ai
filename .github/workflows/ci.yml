@@ -33,21 +33,14 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
-    services:
-      surrealdb:
-        image: surrealdb/surrealdb:v3.0.5
-        ports:
-          - 8000:8000
-        options: >-
-          --health-cmd "curl -sf http://localhost:8000/health"
-          --health-interval 5s
-          --health-timeout 3s
-          --health-retries 10
-        env:
-          SURREAL_USER: root
-          SURREAL_PASS: root
     steps:
       - uses: actions/checkout@08eba0b27e820071cde6df949e0beb9ba4906955
+      - name: Start SurrealDB
+        run: |
+          docker run -d --name surrealdb -p 8000:8000 \
+            surrealdb/surrealdb:v3.0.5 \
+            start --user root --pass root memory
+          until curl -sf http://localhost:8000/health; do sleep 1; done
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6
         with:
           bun-version: latest
