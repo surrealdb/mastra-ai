@@ -24,9 +24,9 @@ const message = (
 	threadId,
 	role: 'user',
 	content: {
-		role: 'user',
-		content: [{ type: 'text', text: 'hello' }],
-	} as MastraDBMessage['content'],
+		format: 2,
+		parts: [{ type: 'text', text: 'hello' }],
+	} as unknown as MastraDBMessage['content'],
 	createdAt: new Date(),
 	...overrides,
 });
