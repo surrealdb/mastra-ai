@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       surrealdb:
-        image: surrealdb/surrealdb:latest
+        image: surrealdb/surrealdb:v3.0.5
         ports:
           - 8000:8000
         options: >-
