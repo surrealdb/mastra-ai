@@ -24,12 +24,6 @@ bun add @surrealdb/mastra-ai
 ## Start SurrealDB
 
 ```sh
-docker compose -f node_modules/@surrealdb/mastra-ai/docker-compose.yml up -d
-```
-
-Or run it directly:
-
-```sh
 surreal start --user root --pass root memory
 ```
 
