@@ -1,4 +1,4 @@
-# @mastra/surrealdb
+# @surrealdb/mastra-ai
 
 SurrealDB storage adapter for [Mastra AI](https://mastra.ai). Covers conversation memory, workflow snapshots, scoring, observability, and native vector search.
 
@@ -18,13 +18,13 @@ SurrealDB storage adapter for [Mastra AI](https://mastra.ai). Covers conversatio
 ## Installation
 
 ```sh
-bun add @mastra/surrealdb
+bun add @surrealdb/mastra-ai
 ```
 
 ## Start SurrealDB
 
 ```sh
-docker compose -f node_modules/@mastra/surrealdb/docker-compose.yml up -d
+docker compose -f node_modules/@surrealdb/mastra-ai/docker-compose.yml up -d
 ```
 
 Or run it directly:
@@ -39,7 +39,7 @@ surreal start --user root --pass root memory
 import { Mastra } from '@mastra/core/mastra';
 import { Agent } from '@mastra/core/agent';
 import { anthropic } from '@ai-sdk/anthropic';
-import { SurrealDBStore } from '@mastra/surrealdb';
+import { SurrealDBStore } from '@surrealdb/mastra-ai';
 
 const store = new SurrealDBStore({
   id: 'my-store',
@@ -117,7 +117,7 @@ new SurrealDBStore({ id: 'my-store', db });
 ```ts
 import { Mastra } from '@mastra/core/mastra';
 import { createWorkflow, createStep } from '@mastra/core/workflows';
-import { SurrealDBStore } from '@mastra/surrealdb';
+import { SurrealDBStore } from '@surrealdb/mastra-ai';
 import { z } from 'zod';
 
 const store = new SurrealDBStore({ id: 'store', url: 'ws://localhost:8000', username: 'root', password: 'root' });
@@ -178,7 +178,7 @@ ANTHROPIC_API_KEY=your-key bun start
 SurrealDB v3 includes native HNSW vector indexes. You can use `SurrealDBClient` directly for RAG:
 
 ```ts
-import { SurrealDBClient } from '@mastra/surrealdb';
+import { SurrealDBClient } from '@surrealdb/mastra-ai';
 
 const SCHEMA = `
 DEFINE TABLE IF NOT EXISTS documents SCHEMAFULL;

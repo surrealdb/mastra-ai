@@ -4,7 +4,7 @@ Multi-turn agent conversation with conversation history persisted in SurrealDB.
 
 ## What it does
 
-Runs a three-turn dialogue with a Mastra agent. Each message and thread is stored in SurrealDB via `@mastra/surrealdb`, so history survives process restarts.
+Runs a three-turn dialogue with a Mastra agent. Each message and thread is stored in SurrealDB via `@surrealdb/mastra-ai`, so history survives process restarts.
 
 ## Prerequisites
 

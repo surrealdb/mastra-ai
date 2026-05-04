@@ -10,7 +10,7 @@
 	"dependencies": {
 		"@ai-sdk/anthropic": "^1.0.0",
 		"@mastra/core": "^1.31.0",
-		"@mastra/surrealdb": "workspace:*",
+		"@surrealdb/mastra-ai": "workspace:*",
 		"ai": "^4.0.0"
 	},
 	"devDependencies": {

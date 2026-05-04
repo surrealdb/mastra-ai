@@ -1,7 +1,7 @@
 import { Agent } from '@mastra/core/agent';
 import { Mastra } from '@mastra/core/mastra';
 import { anthropic } from '@ai-sdk/anthropic';
-import { SurrealDBStore } from '@mastra/surrealdb';
+import { SurrealDBStore } from '@surrealdb/mastra-ai';
 
 const store = new SurrealDBStore({
 	id: 'basic-agent-store',

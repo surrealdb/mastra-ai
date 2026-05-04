@@ -59,7 +59,7 @@ const DOCUMENTS = [
 	{
 		id: 'doc-005',
 		content:
-			'The @mastra/surrealdb package provides a production-ready SurrealDB storage adapter for Mastra AI.',
+			'The @surrealdb/mastra-ai package provides a production-ready SurrealDB storage adapter for Mastra AI.',
 		metadata: { source: 'mastra-surrealdb', category: 'integration' },
 	},
 ];

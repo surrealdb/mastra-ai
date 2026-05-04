@@ -1,6 +1,6 @@
 import { Mastra } from '@mastra/core/mastra';
 import { createStep, createWorkflow } from '@mastra/core/workflows';
-import { SurrealDBStore } from '@mastra/surrealdb';
+import { SurrealDBStore } from '@surrealdb/mastra-ai';
 import { z } from 'zod';
 
 const store = new SurrealDBStore({

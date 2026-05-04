@@ -1,5 +1,5 @@
 {
-	"name": "@mastra/surrealdb",
+	"name": "@surrealdb/mastra-ai",
 	"version": "0.1.0",
 	"description": "SurrealDB storage adapter for Mastra AI",
 	"type": "module",
