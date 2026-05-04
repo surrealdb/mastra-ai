@@ -9,7 +9,7 @@
 	},
 	"dependencies": {
 		"@mastra/core": "^1.31.0",
-		"@surrealdb/mastra-ai": "workspace:*",
+		"@surrealdb/mastra-ai": "file:../..",
 		"zod": "^3.0.0"
 	},
 	"devDependencies": {

@@ -103,26 +103,26 @@ DEFINE INDEX IF NOT EXISTS idx_spans_run    ON mastra_ai_spans FIELDS runId;
 `;
 
 export function getMemorySchema(): string {
-  return MEMORY_SCHEMA;
+	return MEMORY_SCHEMA;
 }
 
 export function getWorkflowsSchema(): string {
-  return WORKFLOWS_SCHEMA;
+	return WORKFLOWS_SCHEMA;
 }
 
 export function getScoresSchema(): string {
-  return SCORES_SCHEMA;
+	return SCORES_SCHEMA;
 }
 
 export function getObservabilitySchema(): string {
-  return OBSERVABILITY_SCHEMA;
+	return OBSERVABILITY_SCHEMA;
 }
 
 export function exportSchemas(): Record<string, string> {
-  return {
-    memory: MEMORY_SCHEMA,
-    workflows: WORKFLOWS_SCHEMA,
-    scores: SCORES_SCHEMA,
-    observability: OBSERVABILITY_SCHEMA,
-  };
+	return {
+		memory: MEMORY_SCHEMA,
+		workflows: WORKFLOWS_SCHEMA,
+		scores: SCORES_SCHEMA,
+		observability: OBSERVABILITY_SCHEMA,
+	};
 }

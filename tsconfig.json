@@ -10,6 +10,9 @@
 		"sourceMap": true,
 		"esModuleInterop": true,
 		"skipLibCheck": true,
-		"resolveJsonModule": true
-	}
+		"resolveJsonModule": true,
+		"outDir": "dist",
+		"rootDir": "src"
+	},
+	"include": ["src/**/*"]
 }
