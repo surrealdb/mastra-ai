@@ -46,8 +46,8 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
-      - run: bun run test
-      - run: bun run test:integration
+      - run: bun run --bun test
+      - run: bun run --bun test:integration
         env:
           SURREALDB_URL: ws://localhost:8000
           SURREALDB_USER: root
