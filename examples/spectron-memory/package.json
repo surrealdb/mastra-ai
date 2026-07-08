@@ -1,0 +1,21 @@
+{
+	"name": "example-spectron-memory",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"start": "bun src/index.ts",
+		"dev": "bun --watch src/index.ts"
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "^1.0.0",
+		"@mastra/core": "^1.31.0",
+		"@surrealdb/mastra-ai": "file:../..",
+		"ai": "^4.0.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"typescript": "^5.8.3"
+	}
+}
