@@ -158,6 +158,7 @@ await store.close();
 | [basic-agent](examples/basic-agent/) | Multi-turn agent conversation with SurrealDB memory |
 | [workflow-persistence](examples/workflow-persistence/) | Suspend/resume workflow with snapshot storage |
 | [rag-pipeline](examples/rag-pipeline/) | Vector similarity search with SurrealDB HNSW indexes |
+| [spectron-memory](examples/spectron-memory/) | Agent memory + tools + RAG backed by the Spectron platform |
 
 To run an example:
 
@@ -199,6 +200,118 @@ const results = await client.queryAll(
 ```
 
 See [examples/rag-pipeline](examples/rag-pipeline/) for a full working example.
+
+## Spectron memory (Mastra × Spectron)
+
+[Spectron](https://surrealdb.com/platform/spectron) is SurrealDB's hosted memory
+platform — it extracts facts, recalls them semantically, and manages documents.
+It's a **separate, standalone integration** from the SurrealDB storage adapter
+above: Spectron is a hosted *service* (reached over REST with an API key), not a
+database you run. This package exposes it through the `@surrealdb/mastra-ai/spectron`
+subpath as a Mastra memory provider, a set of agent tools, and RAG helpers.
+
+Install `zod` alongside this package (the Spectron client ships with it):
+
+```sh
+bun add zod
+```
+
+### `SpectronMemory` provider
+
+`SpectronMemory` works standalone — no database required. Verbatim message
+history is kept in-process while Spectron handles fact extraction, semantic
+recall, and profile. Every Spectron call is guarded, so a service outage
+degrades gracefully to verbatim-only behaviour and never breaks the agent loop.
+
+```ts
+import { Agent } from '@mastra/core/agent';
+import { anthropic } from '@ai-sdk/anthropic';
+import { SpectronMemory } from '@surrealdb/mastra-ai/spectron';
+
+const agent = new Agent({
+  name: 'assistant',
+  instructions: 'You are a helpful assistant with long-term memory.',
+  model: anthropic('claude-sonnet-4-5'),
+  memory: new SpectronMemory({
+    endpoint: process.env.SPECTRON_ENDPOINT!,
+    context: process.env.SPECTRON_CONTEXT!,
+    apiKey: process.env.SPECTRON_API_KEY!,
+  }),
+});
+```
+
+**Optional — combine with Mastra × SurrealDB.** Pass a Mastra store as the
+durable system-of-record for verbatim threads/messages/working memory; Spectron
+then layers on as the intelligence tier. Reuse this package's own adapter:
+
+```ts
+import { SurrealDBStore } from '@surrealdb/mastra-ai';
+
+const store = new SurrealDBStore({
+  id: 'spectron-demo',
+  url: 'ws://localhost:8000',
+  username: 'root',
+  password: 'root',
+});
+await store.init();
+
+const memory = new SpectronMemory({
+  endpoint: process.env.SPECTRON_ENDPOINT!,
+  context: process.env.SPECTRON_CONTEXT!,
+  apiKey: process.env.SPECTRON_API_KEY!,
+  storage: store, // durable verbatim history; omit to keep it in-process
+});
+```
+
+### Spectron tools
+
+Let an agent call Spectron explicitly — store, recall, forget, fetch context,
+and search documents (RAG):
+
+```ts
+import { Spectron } from '@surrealdb/mastra-ai/spectron';
+import { createSpectronTools } from '@surrealdb/mastra-ai/spectron';
+
+const client = new Spectron({
+  endpoint: process.env.SPECTRON_ENDPOINT!,
+  context: process.env.SPECTRON_CONTEXT!,
+  apiKey: process.env.SPECTRON_API_KEY!,
+});
+
+const agent = new Agent({
+  name: 'assistant',
+  instructions: 'Use spectronRecall before answering questions about the user.',
+  model: anthropic('claude-sonnet-4-5'),
+  tools: createSpectronTools(client),
+});
+```
+
+The toolset is `spectronRemember`, `spectronRecall`, `spectronForget`,
+`spectronContext`, and `spectronSearchDocuments`.
+
+### Documents / RAG
+
+```ts
+import { ingestDocument, searchDocuments } from '@surrealdb/mastra-ai/spectron';
+
+await ingestDocument(client, { file, title: 'Handbook' });
+const results = await searchDocuments(client, { query: 'refund policy', k: 5 });
+```
+
+### Limitations
+
+- **Fact cleanup is best-effort.** Deleting a thread or messages removes the
+  verbatim rows exactly, but facts Spectron already derived cannot be surgically
+  removed by message id.
+- **Automatic recall injection needs a query.** `SpectronMemory.recall()` only
+  augments with Spectron hits when a `vectorSearchString` is supplied (this is
+  decoupled from Mastra's vector-based `semanticRecall`, since Spectron embeds
+  server-side). For agent-driven recall, prefer the `spectronRecall` tool.
+- **Isolation is soft under a shared API key.** `resourceId` maps to Spectron
+  scopes/labels, not a hard tenant boundary; use `client.onBehalfOf(principal)`
+  for stronger isolation. One client is pinned to one Spectron `context`.
+
+See [examples/spectron-memory](examples/spectron-memory/) for a full example.
 
 ## API
 
