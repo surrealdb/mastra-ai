@@ -271,6 +271,20 @@ export class SpectronMemory extends MastraMemory {
 		return store.saveThread({ thread: toSave });
 	}
 
+	async updateThread({
+		id,
+		title,
+		metadata,
+	}: {
+		id: string;
+		title: string;
+		metadata: Record<string, unknown>;
+		memoryConfig?: MemoryConfigInternal;
+	}): Promise<StorageThreadType> {
+		const store = await this.getMemoryStore();
+		return store.updateThread({ id, title, metadata });
+	}
+
 	async saveMessages({
 		messages,
 	}: {

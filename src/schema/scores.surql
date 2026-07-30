@@ -1,4 +1,4 @@
-DEFINE TABLE IF NOT EXISTS mastra_scorers SCHEMAFULL;
+DEFINE TABLE IF NOT EXISTS mastra_scorers SCHEMALESS;
 DEFINE FIELD IF NOT EXISTS id         ON mastra_scorers TYPE string;
 DEFINE FIELD IF NOT EXISTS scorerId   ON mastra_scorers TYPE string;
 DEFINE FIELD IF NOT EXISTS runId      ON mastra_scorers TYPE option<string>;
@@ -8,7 +8,7 @@ DEFINE FIELD IF NOT EXISTS traceId    ON mastra_scorers TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS spanId     ON mastra_scorers TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS score      ON mastra_scorers TYPE float;
 DEFINE FIELD IF NOT EXISTS source     ON mastra_scorers TYPE option<string>;
-DEFINE FIELD IF NOT EXISTS metadata   ON mastra_scorers FLEXIBLE TYPE option<object>;
+DEFINE FIELD IF NOT EXISTS metadata   ON mastra_scorers TYPE option<object>;
 DEFINE FIELD IF NOT EXISTS createdAt  ON mastra_scorers TYPE datetime;
 DEFINE INDEX IF NOT EXISTS idx_scorers_scorer  ON mastra_scorers FIELDS scorerId;
 DEFINE INDEX IF NOT EXISTS idx_scorers_run     ON mastra_scorers FIELDS runId;

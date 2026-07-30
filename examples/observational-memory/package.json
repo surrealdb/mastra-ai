@@ -1,0 +1,22 @@
+{
+	"name": "example-observational-memory",
+	"private": true,
+	"version": "0.0.0",
+	"type": "module",
+	"scripts": {
+		"start": "bun src/index.ts",
+		"dev": "bun --watch src/index.ts"
+	},
+	"dependencies": {
+		"@ai-sdk/anthropic": "^1.0.0",
+		"@mastra/core": "^1.52.0",
+		"@mastra/memory": "^1.23.0",
+		"@surrealdb/mastra-ai": "file:../..",
+		"ai": "^4.0.0",
+		"zod": "^4.4.3"
+	},
+	"devDependencies": {
+		"@types/node": "^22.0.0",
+		"typescript": "^5.8.3"
+	}
+}

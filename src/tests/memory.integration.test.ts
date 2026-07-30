@@ -9,7 +9,7 @@ let client: SurrealDBClient;
 let store: MemorySurrealDB;
 
 const thread = (): StorageThreadType => ({
-	id: `thread-${Date.now()}`,
+	id: `thread-${Date.now()}-${Math.random()}`,
 	resourceId: 'user-001',
 	title: 'Test thread',
 	createdAt: new Date(),

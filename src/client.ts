@@ -8,6 +8,12 @@ import {
 
 export { RecordId };
 
+// SurrealDB returns record ids as RecordId instances; extract the plain
+// string key the Mastra contracts expect.
+export function recordKey(id: unknown): string {
+	return id instanceof RecordId ? String(id.id) : String(id);
+}
+
 export class SurrealDBClient {
 	readonly db: Surreal;
 	private readonly owned: boolean;
@@ -99,15 +105,18 @@ export class SurrealDBClient {
 		await this.db.query(surql, bindings);
 	}
 
-	async tx<T>(fn: (db: Surreal) => Promise<T>): Promise<T> {
-		await this.db.query('BEGIN TRANSACTION');
-		try {
-			const result = await fn(this.db);
-			await this.db.query('COMMIT TRANSACTION');
-			return result;
-		} catch (err) {
-			await this.db.query('CANCEL TRANSACTION');
-			throw err;
-		}
+	// SurrealDB v3 does not support transactions spanning separate RPC
+	// calls, so transactional statements must be composed into a single
+	// BEGIN/COMMIT request. Binding names must be unique across statements.
+	async txBatch(
+		statements: string[],
+		bindings?: Record<string, unknown>,
+	): Promise<void> {
+		await this.db.query(
+			['BEGIN TRANSACTION', ...statements, 'COMMIT TRANSACTION'].join(
+				';\n',
+			),
+			bindings,
+		);
 	}
 }

@@ -3,7 +3,7 @@ DEFINE FIELD IF NOT EXISTS id           ON mastra_workflow_snapshot TYPE string;
 DEFINE FIELD IF NOT EXISTS workflowName ON mastra_workflow_snapshot TYPE string;
 DEFINE FIELD IF NOT EXISTS runId        ON mastra_workflow_snapshot TYPE string;
 DEFINE FIELD IF NOT EXISTS resourceId   ON mastra_workflow_snapshot TYPE option<string>;
-DEFINE FIELD IF NOT EXISTS snapshot     ON mastra_workflow_snapshot FLEXIBLE TYPE object;
+DEFINE FIELD IF NOT EXISTS snapshot     ON mastra_workflow_snapshot TYPE object FLEXIBLE;
 DEFINE FIELD IF NOT EXISTS status       ON mastra_workflow_snapshot TYPE option<string>;
 DEFINE FIELD IF NOT EXISTS createdAt    ON mastra_workflow_snapshot TYPE datetime;
 DEFINE FIELD IF NOT EXISTS updatedAt    ON mastra_workflow_snapshot TYPE datetime;

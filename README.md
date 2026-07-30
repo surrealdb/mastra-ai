@@ -5,6 +5,7 @@ SurrealDB storage adapter for [Mastra AI](https://mastra.ai). Covers conversatio
 ## Features
 
 - Conversation memory (threads, messages, working memory)
+- Observational Memory — `@mastra/memory`'s observer/reflector compression and memory extractors, backed by SurrealDB
 - Workflow suspend/resume with atomic snapshot storage
 - Scores and observability spans
 - HNSW vector indexes for RAG without a separate vector database
@@ -151,6 +152,98 @@ await run.resume({
 await store.close();
 ```
 
+## Choosing a memory setup
+
+This package supports three memory configurations. They solve different
+problems: Observational Memory manages the *context window* (compressing the
+active thread so long sessions don't blow the token budget), while Spectron is
+a *context layer* (durable cross-session facts, semantic recall, profile, and
+documents, served from the cloud).
+
+| Setup | Use when | Context-window compression | Long-term cross-session memory |
+|---|---|---|---|
+| `Memory` (`@mastra/memory`) + `SurrealDBStore` | You want Mastra's native memory stack on your own SurrealDB — threads, working memory, Observational Memory, extractors | ✅ Observational Memory | Per-resource working memory; OM resource scope (experimental) |
+| `SpectronMemory` | You want hosted fact extraction, semantic recall, and profile with zero memory infrastructure to run | ❌ (verbatim history) | ✅ Spectron |
+| `Memory` + `SurrealDBStore` + `spectronExtractedSink` | You want both: OM keeps the active thread lean, and extracted facts land in your Spectron context layer | ✅ Observational Memory | ✅ Spectron (via the sink) |
+
+Notes:
+
+- Observational Memory is a feature of `@mastra/memory`'s `Memory` class; it
+  does not apply to `SpectronMemory`.
+- OM extractors run on the observer's existing LLM pass (no extra model call);
+  Spectron extraction runs server-side and doesn't spend your app's tokens.
+  The sink bridges the first into the second.
+
+## Observational Memory & memory extractors
+
+SurrealDB is a supported storage backend for Mastra's
+[Observational Memory](https://mastra.ai/docs/memory/observational-memory) —
+the observer/reflector system that compresses long message histories into
+observations — including
+[memory extractors](https://mastra.ai/blog/introducing-memory-extractors),
+which pull structured facts out of conversations during observation cycles.
+Extracted values persist automatically through the same SurrealDB tables.
+
+Requires `@mastra/memory` >= 1.1.0 (>= 1.22.0 for extractors) in your app:
+
+```ts
+import { Extractor, Memory } from '@mastra/memory';
+import { SurrealDBStore } from '@surrealdb/mastra-ai';
+import { z } from 'zod';
+
+const store = new SurrealDBStore({
+  id: 'om-store',
+  url: 'ws://localhost:8000',
+  username: 'root',
+  password: 'root',
+});
+await store.init();
+
+const memory = new Memory({
+  storage: store,
+  options: {
+    observationalMemory: {
+      model: 'anthropic/claude-haiku-4-5',
+      observation: {
+        extract: [
+          new Extractor({
+            name: 'User profile',
+            instructions: 'Extract stable user profile facts.',
+            schema: z.object({
+              preferredName: z.string().optional(),
+              timezone: z.string().optional(),
+            }),
+          }),
+        ],
+      },
+    },
+  },
+});
+```
+
+**Bridging extractors to Spectron.** Spectron already performs *server-side*
+fact extraction (`remember(..., { infer })`); OM extractors are the
+*client-side* alternative. If you use both, `spectronExtractedSink` pipes each
+extracted value into Spectron as an `onExtracted` hook. Values are stored as
+literal facts (`infer: 'none'`) — extraction already happened client-side, so
+Spectron doesn't run inference over them again (pass
+`remember: { infer: 'full' }` to re-infer anyway). Failures are swallowed so a
+Spectron outage never breaks the observation cycle:
+
+```ts
+import { Spectron, spectronExtractedSink } from '@surrealdb/mastra-ai/spectron';
+
+const spectron = new Spectron({ endpoint, context, apiKey });
+
+new Extractor({
+  name: 'User profile',
+  instructions: 'Extract stable user profile facts.',
+  onExtracted: spectronExtractedSink(spectron, {
+    remember: { memoryCategory: 'profile' },
+  }),
+});
+```
+
 ## Examples
 
 | Example | Description |
@@ -159,6 +252,7 @@ await store.close();
 | [workflow-persistence](examples/workflow-persistence/) | Suspend/resume workflow with snapshot storage |
 | [rag-pipeline](examples/rag-pipeline/) | Vector similarity search with SurrealDB HNSW indexes |
 | [spectron-memory](examples/spectron-memory/) | Agent memory + tools + RAG backed by the Spectron platform |
+| [observational-memory](examples/observational-memory/) | Observational Memory + extractors on SurrealDB, bridged to Spectron |
 
 To run an example:
 
@@ -188,7 +282,7 @@ await client.connect();
 await client.execute(SCHEMA);
 
 await client.execute(
-  `UPSERT type::thing('documents', $id) CONTENT $data`,
+  `UPSERT type::record('documents', $id) CONTENT $data`,
   { id: 'doc-1', data: { content: 'SurrealDB supports vector search.', embedding: [] } },
 );
 
@@ -333,7 +427,7 @@ See [examples/spectron-memory](examples/spectron-memory/) for a full example.
 | `queryAll<T>(surql, bindings?)` | Run a query, return all rows |
 | `queryOne<T>(surql, bindings?)` | Run a query, return first row or `null` |
 | `execute(surql, bindings?)` | Run a statement, no return value |
-| `tx<T>(fn)` | Run `fn` inside `BEGIN`/`COMMIT TRANSACTION`, cancels on error |
+| `txBatch(statements, bindings?)` | Run statements in a single `BEGIN`/`COMMIT TRANSACTION` request (SurrealDB v3 has no cross-request transactions) |
 
 ## License
 
