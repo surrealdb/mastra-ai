@@ -24,5 +24,10 @@ export {
 	listDocuments,
 	searchDocuments,
 } from './documents.js';
+export type {
+	SpectronExtractedContext,
+	SpectronExtractedSinkOptions,
+} from './extractors.js';
+export { spectronExtractedSink } from './extractors.js';
 export { SpectronMemory } from './memory.js';
 export { createSpectronTools } from './tools.js';

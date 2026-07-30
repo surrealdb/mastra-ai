@@ -74,20 +74,21 @@ export class WorkflowsSurrealDB extends WorkflowsStorage {
 	}): Promise<void> {
 		const now = new Date();
 		const id = compositeId(workflowName, runId);
+		// Omit empty option fields: SurrealDB v3 rejects NULL for option<T>.
+		const status = (snapshot as WorkflowRunState & { status?: string })
+			.status;
 		const data = {
 			id,
 			workflowName,
 			runId,
-			resourceId: resourceId ?? null,
+			...(resourceId !== undefined ? { resourceId } : {}),
 			snapshot,
-			status:
-				(snapshot as WorkflowRunState & { status?: string }).status ??
-				null,
+			...(status !== undefined ? { status } : {}),
 			createdAt: createdAt ?? now,
 			updatedAt: updatedAt ?? now,
 		};
 		await this.client.execute(
-			`UPSERT type::thing('mastra_workflow_snapshot', $id) CONTENT $data`,
+			`UPSERT type::record('mastra_workflow_snapshot', $id) CONTENT $data`,
 			{ id, data },
 		);
 	}

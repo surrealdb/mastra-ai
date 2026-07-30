@@ -68,7 +68,7 @@ export class ObservabilitySurrealDB extends ObservabilityStorage {
 			updatedAt: now,
 		};
 		await this.client.execute(
-			`UPSERT type::thing('mastra_ai_spans', $id) CONTENT $data`,
+			`UPSERT type::record('mastra_ai_spans', $id) CONTENT $data`,
 			{ id, data },
 		);
 	}

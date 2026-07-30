@@ -7,7 +7,7 @@ import type {
 } from '@mastra/core/evals';
 import type { StoragePagination } from '@mastra/core/storage';
 import { ScoresStorage } from '@mastra/core/storage';
-import type { SurrealDBClient } from '../../client.js';
+import { recordKey, type SurrealDBClient } from '../../client.js';
 import { getScoresSchema } from '../../schema/index.js';
 
 type RawScore = Record<string, unknown> & {
@@ -24,6 +24,7 @@ function parseDate(d: string | Date): Date {
 function parseScore(r: RawScore): ScoreRowData {
 	return {
 		...r,
+		id: recordKey(r.id),
 		createdAt: parseDate(r.createdAt),
 	} as unknown as ScoreRowData;
 }
@@ -98,7 +99,7 @@ export class ScoresSurrealDB extends ScoresStorage {
 
 	async getScoreById({ id }: { id: string }): Promise<ScoreRowData | null> {
 		const row = await this.client.queryOne<RawScore>(
-			'SELECT * FROM mastra_scorers WHERE id = $id LIMIT 1',
+			`SELECT * FROM type::record('mastra_scorers', $id)`,
 			{ id },
 		);
 		return row ? parseScore(row) : null;
@@ -116,7 +117,7 @@ export class ScoresSurrealDB extends ScoresStorage {
 		};
 
 		await this.client.execute(
-			`CREATE type::thing('mastra_scorers', $id) CONTENT $data`,
+			`CREATE type::record('mastra_scorers', $id) CONTENT $data`,
 			{ id, data },
 		);
 

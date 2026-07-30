@@ -1,6 +1,6 @@
 {
 	"name": "@surrealdb/mastra-ai",
-	"version": "0.1.0",
+	"version": "0.2.0",
 	"description": "SurrealDB storage adapter for Mastra AI",
 	"type": "module",
 	"main": "dist/index.cjs",
@@ -39,7 +39,7 @@
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.14",
-		"@mastra/core": "^1.31.0",
+		"@mastra/core": "^1.52.0",
 		"@types/node": "^22.0.0",
 		"tsup": "^8.5.1",
 		"typescript": "^5.9.3",
