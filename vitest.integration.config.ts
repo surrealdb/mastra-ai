@@ -7,5 +7,8 @@ export default defineConfig({
 		testTimeout: 30000,
 		hookTimeout: 60000,
 		include: ['src/tests/*.integration.test.ts'],
+		// Each file initialises the schema in its own database against one shared
+		// server; running them concurrently can hit KV write conflicts on DEFINE.
+		fileParallelism: false,
 	},
 });

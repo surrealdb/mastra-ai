@@ -1,0 +1,21 @@
+version: 2
+
+updates:
+  # The published package. Examples are deliberately not tracked: they pin
+  # demo dependencies and are not part of the release surface.
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      mastra:
+        patterns:
+          - '@mastra/*'
+      dev-dependencies:
+        dependency-type: development
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly

@@ -16,7 +16,9 @@ jobs:
         with:
           bun-version: latest
       - run: bun install --frozen-lockfile
-      - run: bun run check
+      # `check` is the --write variant used locally; CI must not mutate and must
+      # fail on findings.
+      - run: bun run check:ci
 
   build:
     name: Build & typecheck
