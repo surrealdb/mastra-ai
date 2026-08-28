@@ -14,13 +14,13 @@
 		"vector",
 		"rag"
 	],
-	"homepage": "https://github.com/surrealdb-dev/mastra-ai#readme",
+	"homepage": "https://github.com/surrealdb/mastra-ai#readme",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/surrealdb-dev/mastra-ai.git"
+		"url": "git+https://github.com/surrealdb/mastra-ai.git"
 	},
 	"bugs": {
-		"url": "https://github.com/surrealdb-dev/mastra-ai/issues"
+		"url": "https://github.com/surrealdb/mastra-ai/issues"
 	},
 	"main": "dist/index.cjs",
 	"module": "dist/index.js",
