@@ -18,8 +18,10 @@ SurrealDB storage adapter for [Mastra AI](https://mastra.ai). Covers conversatio
 
 ## Installation
 
+The 1.0 line is currently in beta and is published under the `beta` dist-tag:
+
 ```sh
-bun add @surrealdb/mastra-ai
+bun add @surrealdb/mastra-ai@beta
 ```
 
 ## Start SurrealDB

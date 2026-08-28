@@ -1,8 +1,27 @@
 {
 	"name": "@surrealdb/mastra-ai",
-	"version": "0.2.0",
+	"version": "1.0.0-beta.1",
 	"description": "SurrealDB storage adapter for Mastra AI",
 	"type": "module",
+	"sideEffects": false,
+	"keywords": [
+		"surrealdb",
+		"mastra",
+		"ai",
+		"agent",
+		"memory",
+		"storage",
+		"vector",
+		"rag"
+	],
+	"homepage": "https://github.com/surrealdb-dev/mastra-ai#readme",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/surrealdb-dev/mastra-ai.git"
+	},
+	"bugs": {
+		"url": "https://github.com/surrealdb-dev/mastra-ai/issues"
+	},
 	"main": "dist/index.cjs",
 	"module": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -30,16 +49,20 @@
 		"./package.json": "./package.json"
 	},
 	"license": "Apache-2.0",
+	"publishConfig": {
+		"access": "public"
+	},
 	"engines": {
+		"node": ">=22.13.0",
 		"bun": ">=1.0.0"
 	},
 	"dependencies": {
-		"@surrealdb/spectron": "^1.0.0-alpha.4",
-		"surrealdb": "^2.0.3"
+		"@surrealdb/spectron": "^1.0.0-alpha.8",
+		"surrealdb": "^2.0.8"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.4.14",
-		"@mastra/core": "^1.52.0",
+		"@mastra/core": "^1.63.0",
 		"@types/node": "^22.0.0",
 		"tsup": "^8.5.1",
 		"typescript": "^5.9.3",
@@ -53,6 +76,7 @@
 	"files": [
 		"dist",
 		"src",
+		"!src/tests",
 		"CHANGELOG.md"
 	],
 	"scripts": {
@@ -64,6 +88,7 @@
 		"test:watch": "vitest watch",
 		"lint": "biome lint --write .",
 		"format": "biome format --write .",
-		"check": "biome check --write ."
+		"check": "biome check --write .",
+		"check:ci": "biome ci ."
 	}
 }
