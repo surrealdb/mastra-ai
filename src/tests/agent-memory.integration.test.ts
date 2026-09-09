@@ -1,19 +1,19 @@
 import { InMemoryStore } from '@mastra/core/storage';
-import { Spectron } from '@surrealdb/spectron';
+import { AgentMemory } from '@surrealdb/memory';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { searchDocuments } from '../spectron/documents.js';
-import { SpectronMemory } from '../spectron/memory.js';
+import { searchDocuments } from '../agent-memory/documents.js';
+import { AgentMemoryMemory } from '../agent-memory/memory.js';
 
-const endpoint = process.env['SPECTRON_ENDPOINT'];
-const context = process.env['SPECTRON_CONTEXT'];
-const apiKey = process.env['SPECTRON_API_KEY'];
+const endpoint = process.env['AGENT_MEMORY_ENDPOINT'];
+const context = process.env['AGENT_MEMORY_CONTEXT'];
+const apiKey = process.env['AGENT_MEMORY_API_KEY'];
 const hasCreds = Boolean(endpoint && context && apiKey);
 
-describe.skipIf(!hasCreds)('SpectronMemory (integration)', () => {
+describe.skipIf(!hasCreds)('AgentMemoryMemory (integration)', () => {
 	// Constructed in beforeAll so nothing runs at collection time when skipped.
-	let client: Spectron;
+	let client: AgentMemory;
 	beforeAll(() => {
-		client = new Spectron({
+		client = new AgentMemory({
 			endpoint: endpoint as string,
 			context: context as string,
 			apiKey: apiKey as string,
@@ -21,11 +21,11 @@ describe.skipIf(!hasCreds)('SpectronMemory (integration)', () => {
 	});
 
 	it('round-trips remember -> recall through the memory provider', async () => {
-		const memory = new SpectronMemory({
-			spectron: client,
+		const memory = new AgentMemoryMemory({
+			agentMemory: client,
 			storage: new InMemoryStore(),
 			blocking: true,
-			spectronRecall: { topK: 5 },
+			agentMemoryRecall: { topK: 5 },
 		});
 		const threadId = `it-${Date.now()}`;
 		await memory.saveThread({

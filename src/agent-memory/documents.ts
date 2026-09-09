@@ -1,17 +1,17 @@
-import type { Spectron, SpectronFileInput } from '@surrealdb/spectron';
+import type { AgentMemory, AgentMemoryFileInput } from '@surrealdb/memory';
 
 /**
- * Thin, dependency-free helpers over Spectron's `documents` namespace for RAG
+ * Thin, dependency-free helpers over AgentMemory's `documents` namespace for RAG
  * ingestion and retrieval pipelines. The retrieval helper ({@link searchDocuments})
- * is also exposed as the `spectronSearchDocuments` agent tool.
+ * is also exposed as the `agentMemorySearchDocuments` agent tool.
  */
 
-/** Ingest a document into the Spectron corpus. Returns the ingestion handle. */
+/** Ingest a document into the AgentMemory corpus. Returns the ingestion handle. */
 export function ingestDocument(
-	spectron: Spectron,
-	options: { file: SpectronFileInput; title?: string; mimeType?: string },
+	agentMemory: AgentMemory,
+	options: { file: AgentMemoryFileInput; title?: string; mimeType?: string },
 ) {
-	return spectron.documents.upload(options);
+	return agentMemory.documents.upload(options);
 }
 
 /** Retrieval mode for {@link searchDocuments}. */
@@ -19,10 +19,10 @@ export type DocumentQueryMode = 'hybrid' | 'vector' | 'bm25' | 'hybrid_graph';
 
 /** Hybrid/vector/BM25/graph search over the document corpus. */
 export function searchDocuments(
-	spectron: Spectron,
+	agentMemory: AgentMemory,
 	options: { query: string; k?: number; mode?: DocumentQueryMode },
 ) {
-	return spectron.documents.query({
+	return agentMemory.documents.query({
 		query: options.query,
 		k: options.k,
 		mode: options.mode,
@@ -31,7 +31,7 @@ export function searchDocuments(
 
 /** List documents, optionally filtered by status/mime type. */
 export function listDocuments(
-	spectron: Spectron,
+	agentMemory: AgentMemory,
 	options?: {
 		status?: string;
 		mimeType?: string;
@@ -39,10 +39,10 @@ export function listDocuments(
 		pageSize?: number;
 	},
 ) {
-	return spectron.documents.list(options);
+	return agentMemory.documents.list(options);
 }
 
 /** Delete a document from the corpus. */
-export function deleteDocument(spectron: Spectron, documentId: string) {
-	return spectron.documents.delete(documentId);
+export function deleteDocument(agentMemory: AgentMemory, documentId: string) {
+	return agentMemory.documents.delete(documentId);
 }

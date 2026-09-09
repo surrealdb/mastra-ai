@@ -4,8 +4,8 @@ Runs Mastra's [Observational Memory](https://mastra.ai/docs/memory/observational
 with SurrealDB as the storage backend, plus a
 [memory extractor](https://mastra.ai/blog/introducing-memory-extractors) that
 pulls structured user-profile facts out of each observation cycle. When the
-`SPECTRON_*` environment variables are set, extracted values are also piped
-into Spectron via `spectronExtractedSink`.
+`AGENT_MEMORY_*` environment variables are set, extracted values are also piped
+into AgentMemory via `agentMemoryExtractedSink`.
 
 ## Run
 
@@ -17,8 +17,8 @@ surreal start --user root --pass root memory
 bun install
 ANTHROPIC_API_KEY=your-key bun start
 
-# Optional: bridge extractions into Spectron
-SPECTRON_ENDPOINT=... SPECTRON_CONTEXT=... SPECTRON_API_KEY=... \
+# Optional: bridge extractions into AgentMemory
+AGENT_MEMORY_ENDPOINT=... AGENT_MEMORY_CONTEXT=... AGENT_MEMORY_API_KEY=... \
   ANTHROPIC_API_KEY=your-key bun start
 ```
 
@@ -28,4 +28,4 @@ SPECTRON_ENDPOINT=... SPECTRON_CONTEXT=... SPECTRON_API_KEY=... \
   `activeObservations`, buffered chunks, and extractor payloads
   (`extractedValues`) intact.
 - `src/index.ts` — the `Memory({ options: { observationalMemory } })` config
-  and the `Extractor` with `onExtracted: spectronExtractedSink(...)`.
+  and the `Extractor` with `onExtracted: agentMemoryExtractedSink(...)`.

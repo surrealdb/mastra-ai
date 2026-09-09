@@ -1,9 +1,9 @@
 import type { MastraDBMessage } from '@mastra/core/agent';
 import type { StorageThreadType } from '@mastra/core/memory';
 import { InMemoryStore } from '@mastra/core/storage';
-import { type Spectron, SpectronError } from '@surrealdb/spectron';
+import { type AgentMemory, AgentMemoryError } from '@surrealdb/memory';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { SpectronMemory } from '../spectron/memory.js';
+import { AgentMemoryMemory } from '../agent-memory/memory.js';
 
 type Calls = {
 	sessionsCreate: unknown[];
@@ -13,9 +13,9 @@ type Calls = {
 	forget: unknown[];
 };
 
-function makeFakeSpectron(
-	overrides: Partial<Record<keyof Spectron, unknown>> = {},
-): { spectron: Spectron; calls: Calls } {
+function makeFakeAgentMemory(
+	overrides: Partial<Record<keyof AgentMemory, unknown>> = {},
+): { agentMemory: AgentMemory; calls: Calls } {
 	const calls: Calls = {
 		sessionsCreate: [],
 		rememberMany: [],
@@ -66,7 +66,7 @@ function makeFakeSpectron(
 		}),
 		...overrides,
 	};
-	return { spectron: fake as unknown as Spectron, calls };
+	return { agentMemory: fake as unknown as AgentMemory, calls };
 }
 
 function textMsg(
@@ -93,33 +93,34 @@ const thread: StorageThreadType = {
 	updatedAt: new Date(),
 };
 
-describe('SpectronMemory', () => {
+describe('AgentMemoryMemory', () => {
 	let calls: Calls;
-	let memory: SpectronMemory;
+	let memory: AgentMemoryMemory;
 
 	beforeEach(async () => {
-		const fake = makeFakeSpectron();
+		const fake = makeFakeAgentMemory();
 		calls = fake.calls;
-		memory = new SpectronMemory({
-			spectron: fake.spectron,
+		memory = new AgentMemoryMemory({
+			agentMemory: fake.agentMemory,
 			storage: new InMemoryStore(),
-			spectronRecall: { topK: 3 },
+			agentMemoryRecall: { topK: 3 },
 		});
 		await memory.saveThread({ thread });
 	});
 
-	it('creates a Spectron session lazily on saveThread and caches it', async () => {
+	it('creates a AgentMemory session lazily on saveThread and caches it', async () => {
 		expect(calls.sessionsCreate.length).toBe(1);
 		const saved = await memory.getThreadById({ threadId: 'thread-1' });
 		expect(
-			(saved?.metadata?.__spectron as { sessionId?: string })?.sessionId,
+			(saved?.metadata?.__agentMemory as { sessionId?: string })
+				?.sessionId,
 		).toBe('sess-1');
 	});
 
 	it('mirrors only non-empty, non-synthetic messages to rememberMany', async () => {
 		const messages: MastraDBMessage[] = [
 			textMsg('m1', 'user', 'My name is Alice'),
-			textMsg('spectron:x', 'assistant', 'synthetic recall'),
+			textMsg('agentMemory:x', 'assistant', 'synthetic recall'),
 			{
 				...textMsg('m2', 'assistant', ''),
 				content: { format: 2, parts: [] },
@@ -133,7 +134,7 @@ describe('SpectronMemory', () => {
 		expect(batch).toEqual([{ role: 'user', content: 'My name is Alice' }]);
 	});
 
-	it('recall merges verbatim history with synthesized Spectron hits', async () => {
+	it('recall merges verbatim history with synthesized AgentMemory hits', async () => {
 		await memory.saveMessages({ messages: [textMsg('m1', 'user', 'hi')] });
 		const res = await memory.recall({
 			threadId: 'thread-1',
@@ -143,13 +144,13 @@ describe('SpectronMemory', () => {
 
 		expect(calls.recall).toHaveLength(1);
 		const ids = res.messages.map((m) => m.id);
-		expect(ids).toContain('spectron:h1');
+		expect(ids).toContain('agentMemory:h1');
 		expect(ids).toContain('m1');
 		// synthesized hit is prepended
-		expect(ids[0]).toBe('spectron:h1');
+		expect(ids[0]).toBe('agentMemory:h1');
 	});
 
-	it('does not call Spectron recall when no vectorSearchString', async () => {
+	it('does not call AgentMemory recall when no vectorSearchString', async () => {
 		await memory.saveMessages({ messages: [textMsg('m1', 'user', 'hi')] });
 		const res = await memory.recall({
 			threadId: 'thread-1',
@@ -159,14 +160,14 @@ describe('SpectronMemory', () => {
 		expect(res.messages.map((m) => m.id)).toEqual(['m1']);
 	});
 
-	it('guards Spectron failures so the local write still succeeds', async () => {
-		const fake = makeFakeSpectron({
+	it('guards AgentMemory failures so the local write still succeeds', async () => {
+		const fake = makeFakeAgentMemory({
 			rememberMany: async () => {
-				throw new SpectronError({ status: 500, title: 'boom' });
+				throw new AgentMemoryError({ status: 500, title: 'boom' });
 			},
 		});
-		const mem = new SpectronMemory({
-			spectron: fake.spectron,
+		const mem = new AgentMemoryMemory({
+			agentMemory: fake.agentMemory,
 			storage: new InMemoryStore(),
 			blocking: true,
 		});

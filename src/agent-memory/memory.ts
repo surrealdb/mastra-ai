@@ -19,20 +19,20 @@ import {
 	type StorageListThreadsInput,
 	type StorageListThreadsOutput,
 } from '@mastra/core/storage';
-import { Spectron, SpectronError } from '@surrealdb/spectron';
+import { AgentMemory, AgentMemoryError } from '@surrealdb/memory';
 import {
-	isSpectronInstanceConfig,
-	type SpectronMemoryConfig,
+	type AgentMemoryMemoryConfig,
+	isAgentMemoryInstanceConfig,
 } from './config.js';
 
 /** Marker written onto synthesized recall messages so they never round-trip as facts. */
-const SPECTRON_MARKER = '__spectron';
-const SPECTRON_ID_PREFIX = 'spectron:';
+const AGENT_MEMORY_MARKER = '__agentMemory';
+const AGENT_MEMORY_ID_PREFIX = 'agentMemory:';
 
 type TurnRole = 'user' | 'assistant' | 'system' | 'tool';
 type BatchMessage = { role: TurnRole; content: string };
 
-/** A Mastra role maps 1:1 onto a Spectron `TurnRole`; unknown roles fall back to user. */
+/** A Mastra role maps 1:1 onto a AgentMemory `TurnRole`; unknown roles fall back to user. */
 function mapRole(role: string): TurnRole {
 	switch (role) {
 		case 'user':
@@ -69,29 +69,29 @@ function extractText(
 }
 
 /** Synthesized recall messages are marked so they are excluded from mirror writes. */
-function isSpectronSynthetic(msg: MastraDBMessage): boolean {
+function isAgentMemorySynthetic(msg: MastraDBMessage): boolean {
 	return (
-		msg.id?.startsWith(SPECTRON_ID_PREFIX) ||
+		msg.id?.startsWith(AGENT_MEMORY_ID_PREFIX) ||
 		(msg.content?.metadata as Record<string, unknown> | undefined)?.[
-			SPECTRON_MARKER
+			AGENT_MEMORY_MARKER
 		] === true
 	);
 }
 
 /**
- * A {@link MastraMemory} provider backed by SurrealDB's Spectron memory platform.
+ * A {@link MastraMemory} provider backed by SurrealDB's AgentMemory memory platform.
  *
  * Works standalone — no database required. Verbatim threads/messages/working
- * memory are kept in an in-process store by default, while Spectron is layered
+ * memory are kept in an in-process store by default, while AgentMemory is layered
  * on as the intelligence tier (fact extraction, semantic recall, profile).
  * Pass a durable Mastra `storage` (e.g. this package's `SurrealDBStore`) to make
  * the verbatim record survive restarts.
  *
- * Every Spectron call is guarded, so a service failure degrades gracefully to
+ * Every AgentMemory call is guarded, so a service failure degrades gracefully to
  * verbatim-only behaviour and never breaks an agent's generate/stream loop.
  */
-export class SpectronMemory extends MastraMemory {
-	readonly spectron: Spectron;
+export class AgentMemoryMemory extends MastraMemory {
+	readonly agentMemory: AgentMemory;
 	private readonly scopePrefix: string;
 	private readonly blocking: boolean;
 	private readonly injectProfile: boolean;
@@ -102,10 +102,10 @@ export class SpectronMemory extends MastraMemory {
 	private readonly sessionCache = new Map<string, string>();
 	private probe?: Promise<void>;
 
-	constructor(config: SpectronMemoryConfig) {
+	constructor(config: AgentMemoryMemoryConfig) {
 		super({
 			id: config.id,
-			name: config.name ?? 'SpectronMemory',
+			name: config.name ?? 'AgentMemoryMemory',
 			storage: config.storage ?? new InMemoryStore(),
 			options: config.options,
 		});
@@ -114,13 +114,13 @@ export class SpectronMemory extends MastraMemory {
 		this.blocking = config.blocking ?? false;
 		this.injectProfile = config.injectProfile ?? false;
 		this.includeToolCalls = config.includeToolCalls ?? false;
-		const sr = config.spectronRecall ?? true;
+		const sr = config.agentMemoryRecall ?? true;
 		this.recallEnabled = sr !== false;
 		this.recallTopK = typeof sr === 'object' ? (sr.topK ?? 5) : 5;
 		this.recallScope = typeof sr === 'object' ? sr.scope : undefined;
-		this.spectron = isSpectronInstanceConfig(config)
-			? config.spectron
-			: new Spectron({
+		this.agentMemory = isAgentMemoryInstanceConfig(config)
+			? config.agentMemory
+			: new AgentMemory({
 					endpoint: config.endpoint,
 					context: config.context,
 					apiKey: config.apiKey,
@@ -134,24 +134,26 @@ export class SpectronMemory extends MastraMemory {
 		const store = await this.storage.getStore('memory');
 		if (!store) {
 			throw new Error(
-				'SpectronMemory requires a storage adapter with a memory domain',
+				'AgentMemoryMemory requires a storage adapter with a memory domain',
 			);
 		}
 		return store;
 	}
 
-	/** Wrap a Spectron call: catch every {@link SpectronError} and degrade to `fallback`. */
+	/** Wrap a AgentMemory call: catch every {@link AgentMemoryError} and degrade to `fallback`. */
 	private async guard<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 		try {
 			return await fn();
 		} catch (err) {
-			if (err instanceof SpectronError) {
+			if (err instanceof AgentMemoryError) {
 				this.logger?.warn?.(
-					`Spectron call failed (${err.status} ${err.title}); degrading gracefully`,
+					`AgentMemory call failed (${err.status} ${err.title}); degrading gracefully`,
 				);
 				return fallback;
 			}
-			this.logger?.warn?.('Spectron call failed; degrading gracefully');
+			this.logger?.warn?.(
+				'AgentMemory call failed; degrading gracefully',
+			);
 			return fallback;
 		}
 	}
@@ -170,12 +172,12 @@ export class SpectronMemory extends MastraMemory {
 	 */
 	private ensureProbe(): Promise<void> {
 		if (!this.probe) {
-			this.probe = this.spectron
+			this.probe = this.agentMemory
 				.whoami()
 				.then(() => undefined)
 				.catch((err) => {
 					if (
-						err instanceof SpectronError &&
+						err instanceof AgentMemoryError &&
 						(err.status === 401 || err.status === 403)
 					) {
 						throw err;
@@ -198,7 +200,7 @@ export class SpectronMemory extends MastraMemory {
 	}
 
 	/**
-	 * Resolve the Spectron session for a thread, creating one lazily. The
+	 * Resolve the AgentMemory session for a thread, creating one lazily. The
 	 * server-generated id is cached in-process and stashed on `thread.metadata`.
 	 */
 	private async ensureSession(
@@ -211,7 +213,9 @@ export class SpectronMemory extends MastraMemory {
 		if (cached) return { sessionId: cached, scopes };
 
 		const fromMeta = (
-			metadata?.[SPECTRON_MARKER] as { sessionId?: string } | undefined
+			metadata?.[AGENT_MEMORY_MARKER] as
+				| { sessionId?: string }
+				| undefined
 		)?.sessionId;
 		if (fromMeta) {
 			this.sessionCache.set(threadId, fromMeta);
@@ -220,7 +224,7 @@ export class SpectronMemory extends MastraMemory {
 
 		const session = await this.guard(
 			() =>
-				this.spectron.sessions.create({
+				this.agentMemory.sessions.create({
 					scopes,
 					metadata: { threadId, resourceId },
 				}),
@@ -263,7 +267,7 @@ export class SpectronMemory extends MastraMemory {
 					...thread,
 					metadata: {
 						...thread.metadata,
-						[SPECTRON_MARKER]: { sessionId, scopes },
+						[AGENT_MEMORY_MARKER]: { sessionId, scopes },
 					},
 				}
 			: thread;
@@ -294,10 +298,10 @@ export class SpectronMemory extends MastraMemory {
 		const store = await this.getMemoryStore();
 		const result = await store.saveMessages({ messages });
 
-		// Best-effort mirror into Spectron, grouped by thread; skip synthesized rows.
+		// Best-effort mirror into AgentMemory, grouped by thread; skip synthesized rows.
 		const byThread = new Map<string, MastraDBMessage[]>();
 		for (const msg of messages) {
-			if (isSpectronSynthetic(msg) || !msg.threadId) continue;
+			if (isAgentMemorySynthetic(msg) || !msg.threadId) continue;
 			const list = byThread.get(msg.threadId) ?? [];
 			list.push(msg);
 			byThread.set(msg.threadId, list);
@@ -316,7 +320,7 @@ export class SpectronMemory extends MastraMemory {
 					threadId,
 					resourceId,
 				);
-				return this.spectron.rememberMany(batch, {
+				return this.agentMemory.rememberMany(batch, {
 					sessionId,
 					scopes,
 					labels: [`threadId=${threadId}`],
@@ -369,7 +373,7 @@ export class SpectronMemory extends MastraMemory {
 
 		const res = await this.guard(
 			() =>
-				this.spectron.recall(vectorSearchString, {
+				this.agentMemory.recall(vectorSearchString, {
 					k: this.recallTopK,
 					sessionId,
 				}),
@@ -379,7 +383,7 @@ export class SpectronMemory extends MastraMemory {
 		const seen = new Set(messages.map((m) => m.id));
 		const synthesized: MastraDBMessage[] = [];
 		for (const hit of res?.hits ?? []) {
-			const id = `${SPECTRON_ID_PREFIX}${hit.id}`;
+			const id = `${AGENT_MEMORY_ID_PREFIX}${hit.id}`;
 			if (seen.has(id)) continue;
 			seen.add(id);
 			synthesized.push({
@@ -393,7 +397,7 @@ export class SpectronMemory extends MastraMemory {
 					format: 2,
 					parts: [{ type: 'text', text: hit.text }],
 					content: hit.text,
-					metadata: { [SPECTRON_MARKER]: true, score: hit.score },
+					metadata: { [AGENT_MEMORY_MARKER]: true, score: hit.score },
 				},
 			} as MastraDBMessage);
 		}
@@ -406,7 +410,7 @@ export class SpectronMemory extends MastraMemory {
 		await store.deleteThread({ threadId });
 		this.sessionCache.delete(threadId);
 		await this.mirror(() =>
-			this.spectron.forget(`thread ${threadId}`, { purge: true }),
+			this.agentMemory.forget(`thread ${threadId}`, { purge: true }),
 		);
 	}
 
@@ -418,7 +422,7 @@ export class SpectronMemory extends MastraMemory {
 			: [messageIds as unknown as string];
 		const store = await this.getMemoryStore();
 		await store.deleteMessages(ids);
-		// Spectron cannot delete facts by message id; verbatim delete is exact.
+		// AgentMemory cannot delete facts by message id; verbatim delete is exact.
 	}
 
 	async getWorkingMemory({
@@ -452,7 +456,7 @@ export class SpectronMemory extends MastraMemory {
 		if (wm.template) return { format: 'markdown', content: wm.template };
 		if (wm.schema) {
 			this.logger?.warn?.(
-				'SpectronMemory: schema-based working memory templates are not supported; use `template`',
+				'AgentMemoryMemory: schema-based working memory templates are not supported; use `template`',
 			);
 		}
 		return null;
@@ -486,7 +490,7 @@ export class SpectronMemory extends MastraMemory {
 				threadId,
 				resourceId,
 			);
-			return this.spectron.remember(workingMemory, {
+			return this.agentMemory.remember(workingMemory, {
 				infer: 'full',
 				sessionId,
 				scopes,
@@ -534,7 +538,7 @@ export class SpectronMemory extends MastraMemory {
 	): Promise<StorageCloneThreadOutput> {
 		const store = await this.getMemoryStore();
 		const result = await store.cloneThread(args);
-		// Give the clone its own Spectron session, lazily on next write.
+		// Give the clone its own AgentMemory session, lazily on next write.
 		return result;
 	}
 
@@ -547,7 +551,7 @@ export class SpectronMemory extends MastraMemory {
 		const sessionId = this.sessionCache.get(input.threadId);
 		const res = await this.guard(
 			() =>
-				this.spectron.context('What is known about this user?', {
+				this.agentMemory.context('What is known about this user?', {
 					k: 10,
 					...(sessionId ? {} : {}),
 				}),

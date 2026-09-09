@@ -3,7 +3,7 @@ import { Agent } from '@mastra/core/agent';
 import { Mastra } from '@mastra/core/mastra';
 import { Extractor, Memory } from '@mastra/memory';
 import { SurrealDBStore } from '@surrealdb/mastra-ai';
-import { Spectron, spectronExtractedSink } from '@surrealdb/mastra-ai/spectron';
+import { AgentMemory, agentMemoryExtractedSink } from '@surrealdb/mastra-ai/agentMemory';
 import { z } from 'zod';
 
 // Observational Memory on SurrealDB: the observer agent compresses message
@@ -20,14 +20,14 @@ const store = new SurrealDBStore({
 	database: 'observational_memory',
 });
 
-// Optional: bridge extracted values into Spectron. Skipped when the
-// SPECTRON_* environment variables are absent.
-const endpoint = process.env['SPECTRON_ENDPOINT'];
-const context = process.env['SPECTRON_CONTEXT'];
-const apiKey = process.env['SPECTRON_API_KEY'];
-const spectron =
+// Optional: bridge extracted values into AgentMemory. Skipped when the
+// AGENT_MEMORY_* environment variables are absent.
+const endpoint = process.env['AGENT_MEMORY_ENDPOINT'];
+const context = process.env['AGENT_MEMORY_CONTEXT'];
+const apiKey = process.env['AGENT_MEMORY_API_KEY'];
+const agentMemory =
 	endpoint && context && apiKey
-		? new Spectron({ endpoint, context, apiKey })
+		? new AgentMemory({ endpoint, context, apiKey })
 		: undefined;
 
 const profileSchema = z.object({
@@ -41,9 +41,9 @@ const profileExtractor = new Extractor<z.infer<typeof profileSchema>>({
 	instructions:
 		'Extract stable facts about the user: name, location, preferences.',
 	schema: profileSchema,
-	...(spectron
+	...(agentMemory
 		? {
-				onExtracted: spectronExtractedSink(spectron, {
+				onExtracted: agentMemoryExtractedSink(agentMemory, {
 					remember: { memoryCategory: 'profile' },
 				}),
 			}

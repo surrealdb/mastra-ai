@@ -15,7 +15,7 @@ and `@mastra/core` 1.63.
 - Raised the tested `@mastra/core` floor to **1.63.0** (peer range stays
   `>=1.31.0-0 <2.0.0-0`). No source changes were required — the 1.52 → 1.63
   jump is source-compatible for this adapter.
-- Updated `surrealdb` to 2.0.8 and `@surrealdb/spectron` to 1.0.0-alpha.8.
+- Updated `surrealdb` to 2.0.8 and `@surrealdb/memory` to 1.0.0-alpha.8.
 - Integration tests now run with `fileParallelism: false`. Each file initialises
   the schema in its own database against one shared server, and running them
   concurrently could hit KV write conflicts on `DEFINE`.
@@ -53,8 +53,8 @@ workflow defect described above. Its contents ship as part of `1.0.0-beta.1`.
 - **Observational Memory.** `MemorySurrealDB` implements the full OM storage
   contract (`supportsObservationalMemory = true`), backed by the
   `mastra_observational_memory` table.
-- **Memory extractors.** `spectronExtractedSink` bridges `@mastra/memory`'s
-  observer/reflector extraction into `spectron.remember`.
+- **Memory extractors.** `agentMemoryExtractedSink` bridges `@mastra/memory`'s
+  observer/reflector extraction into `agentMemory.remember`.
 - `examples/observational-memory`.
 
 ### Fixed
@@ -74,8 +74,8 @@ Initial release.
 - Conversation memory: threads, messages, and working memory.
 - Workflow suspend/resume with atomic snapshot storage.
 - HNSW vector indexes for RAG without a separate vector database.
-- Spectron integration under the `@surrealdb/mastra-ai/spectron` subpath:
-  `SpectronMemory`, `createSpectronTools`, and document/RAG helpers.
+- AgentMemory integration under the `@surrealdb/mastra-ai/agentMemory` subpath:
+  `AgentMemoryMemory`, `createAgentMemoryTools`, and document/RAG helpers.
 
 [1.0.0-beta.1]: https://github.com/surrealdb/mastra-ai/releases/tag/v1.0.0-beta.1
 [0.2.0]: https://github.com/surrealdb/mastra-ai/releases/tag/v0.2.0

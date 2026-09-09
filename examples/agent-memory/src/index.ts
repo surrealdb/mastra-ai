@@ -2,38 +2,38 @@ import { Agent } from '@mastra/core/agent';
 import { Mastra } from '@mastra/core/mastra';
 import { anthropic } from '@ai-sdk/anthropic';
 import {
-	createSpectronTools,
-	Spectron,
-	SpectronMemory,
+	createAgentMemoryTools,
+	AgentMemory,
+	AgentMemoryMemory,
 	searchDocuments,
-} from '@surrealdb/mastra-ai/spectron';
+} from '@surrealdb/mastra-ai/agentMemory';
 
-const endpoint = process.env['SPECTRON_ENDPOINT'];
-const context = process.env['SPECTRON_CONTEXT'];
-const apiKey = process.env['SPECTRON_API_KEY'];
+const endpoint = process.env['AGENT_MEMORY_ENDPOINT'];
+const context = process.env['AGENT_MEMORY_CONTEXT'];
+const apiKey = process.env['AGENT_MEMORY_API_KEY'];
 
 if (!endpoint || !context || !apiKey) {
 	console.error(
-		'Set SPECTRON_ENDPOINT, SPECTRON_CONTEXT and SPECTRON_API_KEY to run this example.',
+		'Set AGENT_MEMORY_ENDPOINT, AGENT_MEMORY_CONTEXT and AGENT_MEMORY_API_KEY to run this example.',
 	);
 	process.exit(1);
 }
 
-// Standalone Mastra x Spectron — no database to run. Facts and semantic recall
-// live in the hosted Spectron service; verbatim history is kept in-process.
+// Standalone Mastra x AgentMemory — no database to run. Facts and semantic recall
+// live in the hosted AgentMemory service; verbatim history is kept in-process.
 // (Pass `storage: new SurrealDBStore({...})` if you want durable verbatim history.)
-const spectron = new Spectron({ endpoint, context, apiKey });
+const agentMemory = new AgentMemory({ endpoint, context, apiKey });
 
 const agent = new Agent({
 	name: 'assistant',
 	instructions:
-		'You are a helpful assistant with long-term memory backed by Spectron. ' +
-		'Use the spectronRecall tool to look up what you know about the user before answering.',
+		'You are a helpful assistant with long-term memory backed by AgentMemory. ' +
+		'Use the agentMemoryRecall tool to look up what you know about the user before answering.',
 	model: anthropic('claude-sonnet-4-5'),
-	// Automatic memory: messages are mirrored into Spectron for fact extraction.
-	memory: new SpectronMemory({ spectron, blocking: true }),
+	// Automatic memory: messages are mirrored into AgentMemory for fact extraction.
+	memory: new AgentMemoryMemory({ agentMemory, blocking: true }),
 	// Explicit memory + RAG the model can call on demand.
-	tools: createSpectronTools(spectron),
+	tools: createAgentMemoryTools(agentMemory),
 });
 
 const mastra = new Mastra({ agents: { assistant: agent } });
@@ -57,9 +57,9 @@ async function main() {
 	});
 	console.log('Agent:', r2.text);
 
-	// Document RAG: search the Spectron corpus directly.
+	// Document RAG: search the AgentMemory corpus directly.
 	console.log('\n--- Document search ---');
-	const hits = await searchDocuments(spectron, {
+	const hits = await searchDocuments(agentMemory, {
 		query: 'hiking trails',
 		k: 3,
 	});
