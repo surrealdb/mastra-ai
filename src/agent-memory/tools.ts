@@ -1,8 +1,11 @@
 import { createTool } from '@mastra/core/tools';
-import { type AgentMemory, AgentMemoryError } from '@surrealdb/memory';
+import {
+	type AgentMemory as AgentMemoryClient,
+	AgentMemoryError,
+} from '@surrealdb/memory';
 import { z } from 'zod';
 
-/** Run a AgentMemory call for a tool, returning a structured error instead of throwing. */
+/** Run an Agent Memory call for a tool, returning a structured error instead of throwing. */
 async function safe<T>(fn: () => Promise<T>): Promise<T | { error: string }> {
 	try {
 		return await fn();
@@ -17,14 +20,14 @@ async function safe<T>(fn: () => Promise<T>): Promise<T | { error: string }> {
 }
 
 /**
- * Build a Mastra toolset that lets an agent call AgentMemory explicitly:
+ * Build a Mastra toolset that lets an agent call Agent Memory explicitly:
  * store facts, semantically recall memory, forget, fetch assembled context,
  * and search the document corpus (RAG).
  *
  * @example
  * const agent = new Agent({ ..., tools: createAgentMemoryTools(client) });
  */
-export function createAgentMemoryTools(agentMemory: AgentMemory) {
+export function createAgentMemoryTools(agentMemory: AgentMemoryClient) {
 	return {
 		agentMemoryRemember: createTool({
 			id: 'agent-memory-remember',

@@ -4,9 +4,9 @@ import { anthropic } from '@ai-sdk/anthropic';
 import {
 	createAgentMemoryTools,
 	AgentMemory,
-	AgentMemoryMemory,
+	AgentMemory,
 	searchDocuments,
-} from '@surrealdb/mastra-ai/agentMemory';
+} from '@surrealdb/mastra-ai/agent-memory';
 
 const endpoint = process.env['AGENT_MEMORY_ENDPOINT'];
 const context = process.env['AGENT_MEMORY_CONTEXT'];
@@ -19,8 +19,8 @@ if (!endpoint || !context || !apiKey) {
 	process.exit(1);
 }
 
-// Standalone Mastra x AgentMemory — no database to run. Facts and semantic recall
-// live in the hosted AgentMemory service; verbatim history is kept in-process.
+// Standalone Mastra x Agent Memory — no database to run. Facts and semantic recall
+// live in the hosted Agent Memory service; verbatim history is kept in-process.
 // (Pass `storage: new SurrealDBStore({...})` if you want durable verbatim history.)
 const agentMemory = new AgentMemory({ endpoint, context, apiKey });
 
@@ -30,8 +30,8 @@ const agent = new Agent({
 		'You are a helpful assistant with long-term memory backed by AgentMemory. ' +
 		'Use the agentMemoryRecall tool to look up what you know about the user before answering.',
 	model: anthropic('claude-sonnet-4-5'),
-	// Automatic memory: messages are mirrored into AgentMemory for fact extraction.
-	memory: new AgentMemoryMemory({ agentMemory, blocking: true }),
+	// Automatic memory: messages are mirrored into Agent Memory for fact extraction.
+	memory: new AgentMemory({ agentMemory, blocking: true }),
 	// Explicit memory + RAG the model can call on demand.
 	tools: createAgentMemoryTools(agentMemory),
 });
@@ -57,7 +57,7 @@ async function main() {
 	});
 	console.log('Agent:', r2.text);
 
-	// Document RAG: search the AgentMemory corpus directly.
+	// Document RAG: search the Agent Memory corpus directly.
 	console.log('\n--- Document search ---');
 	const hits = await searchDocuments(agentMemory, {
 		query: 'hiking trails',

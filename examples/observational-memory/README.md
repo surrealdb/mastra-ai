@@ -5,7 +5,7 @@ with SurrealDB as the storage backend, plus a
 [memory extractor](https://mastra.ai/blog/introducing-memory-extractors) that
 pulls structured user-profile facts out of each observation cycle. When the
 `AGENT_MEMORY_*` environment variables are set, extracted values are also piped
-into AgentMemory via `agentMemoryExtractedSink`.
+into Agent Memory via `agentMemoryExtractedSink`.
 
 ## Run
 

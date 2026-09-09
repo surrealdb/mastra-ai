@@ -3,17 +3,17 @@ import type { MastraCompositeStore } from '@mastra/core/storage';
 import type { AgentMemory } from '@surrealdb/memory';
 
 /**
- * Options shared by every {@link AgentMemoryMemoryConfig} variant.
+ * Options shared by every {@link AgentMemoryConfig} variant.
  *
- * `AgentMemoryMemory` is a hybrid: a durable {@link MastraCompositeStore} is the
+ * `Agent Memory` is a hybrid: a durable {@link MastraCompositeStore} is the
  * system-of-record for verbatim threads, messages and working memory, while
- * the AgentMemory client is layered on top as a best-effort intelligence tier
+ * the Agent Memory client is layered on top as a best-effort intelligence tier
  * (fact extraction + semantic recall + profile).
  */
-export interface AgentMemoryMemoryBaseConfig {
+export interface AgentMemoryBaseConfig {
 	/** Unique id for the memory instance. Defaults to a generated id. */
 	id?: string;
-	/** Instance name. Defaults to `'AgentMemoryMemory'`. */
+	/** Instance name. Defaults to `'Agent Memory'`. */
 	name?: string;
 	/** Mastra memory options (lastMessages, semanticRecall, workingMemory, ...). */
 	options?: SharedMemoryConfig['options'];
@@ -22,11 +22,11 @@ export interface AgentMemoryMemoryBaseConfig {
 	 * package's `SurrealDBStore` in production. Defaults to an in-memory store.
 	 */
 	storage?: MastraCompositeStore;
-	/** Scope-selector prefix used when tagging AgentMemory writes. Defaults to `'mastra'`. */
+	/** Scope-selector prefix used when tagging Agent Memory writes. Defaults to `'mastra'`. */
 	scopePrefix?: string;
 	/**
-	 * Augment `recall()` with AgentMemory semantic hits when a `vectorSearchString`
-	 * is provided. Independent of Mastra's vector-based `semanticRecall` (AgentMemory
+	 * Augment `recall()` with Agent Memory semantic hits when a `vectorSearchString`
+	 * is provided. Independent of Mastra's vector-based `semanticRecall` (Agent Memory
 	 * embeds server-side, so no Mastra vector store is needed). Defaults to `true`.
 	 * For automatic agent-driven recall, prefer the `agentMemoryRecall` tool from
 	 * {@link createAgentMemoryTools}.
@@ -35,28 +35,27 @@ export interface AgentMemoryMemoryBaseConfig {
 		| boolean
 		| { topK?: number; scope?: 'thread' | 'resource' };
 	/**
-	 * Await AgentMemory mirror writes on the critical path. When `false` (default)
-	 * writes are fire-and-forget so a slow/failed AgentMemory never stalls the loop.
+	 * Await Agent Memory mirror writes on the critical path. When `false` (default)
+	 * writes are fire-and-forget so a slow/failed Agent Memory never stalls the loop.
 	 */
 	blocking?: boolean;
 	/**
-	 * Inject a AgentMemory profile/context block via `getSystemMessage`. Off by
+	 * Inject an Agent Memory profile/context block via `getSystemMessage`. Off by
 	 * default so working-memory round-trips stay lossless.
 	 */
 	injectProfile?: boolean;
 	/**
-	 * Serialize tool-call parts into the facts sent to AgentMemory. Off by default
+	 * Serialize tool-call parts into the facts sent to Agent Memory. Off by default
 	 * because tool noise tends to pollute fact extraction.
 	 */
 	includeToolCalls?: boolean;
 }
 
-/** Construct the AgentMemory client from credentials. */
-export interface AgentMemoryCredentialsConfig
-	extends AgentMemoryMemoryBaseConfig {
+/** Construct the Agent Memory client from credentials. */
+export interface AgentMemoryCredentialsConfig extends AgentMemoryBaseConfig {
 	/** API endpoint origin without a trailing slash. */
 	endpoint: string;
-	/** AgentMemory context id (API path segment). */
+	/** Agent Memory context id (API path segment). */
 	context: string;
 	/** API key sent as a bearer token. */
 	apiKey: string;
@@ -68,17 +67,17 @@ export interface AgentMemoryCredentialsConfig
 	fetchImpl?: typeof fetch;
 }
 
-/** Reuse a pre-built AgentMemory client. */
-export interface AgentMemoryInstanceConfig extends AgentMemoryMemoryBaseConfig {
+/** Reuse a pre-built Agent Memory client. */
+export interface AgentMemoryInstanceConfig extends AgentMemoryBaseConfig {
 	agentMemory: AgentMemory;
 }
 
-export type AgentMemoryMemoryConfig =
+export type AgentMemoryConfig =
 	| AgentMemoryCredentialsConfig
 	| AgentMemoryInstanceConfig;
 
 export function isAgentMemoryInstanceConfig(
-	cfg: AgentMemoryMemoryConfig,
+	cfg: AgentMemoryConfig,
 ): cfg is AgentMemoryInstanceConfig {
 	return 'agentMemory' in cfg;
 }

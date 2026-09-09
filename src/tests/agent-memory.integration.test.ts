@@ -1,19 +1,19 @@
 import { InMemoryStore } from '@mastra/core/storage';
-import { AgentMemory } from '@surrealdb/memory';
+import { AgentMemory as AgentMemoryClient } from '@surrealdb/memory';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { searchDocuments } from '../agent-memory/documents.js';
-import { AgentMemoryMemory } from '../agent-memory/memory.js';
+import { AgentMemory } from '../agent-memory/memory.js';
 
 const endpoint = process.env['AGENT_MEMORY_ENDPOINT'];
 const context = process.env['AGENT_MEMORY_CONTEXT'];
 const apiKey = process.env['AGENT_MEMORY_API_KEY'];
 const hasCreds = Boolean(endpoint && context && apiKey);
 
-describe.skipIf(!hasCreds)('AgentMemoryMemory (integration)', () => {
+describe.skipIf(!hasCreds)('AgentMemory (integration)', () => {
 	// Constructed in beforeAll so nothing runs at collection time when skipped.
-	let client: AgentMemory;
+	let client: AgentMemoryClient;
 	beforeAll(() => {
-		client = new AgentMemory({
+		client = new AgentMemoryClient({
 			endpoint: endpoint as string,
 			context: context as string,
 			apiKey: apiKey as string,
@@ -21,7 +21,7 @@ describe.skipIf(!hasCreds)('AgentMemoryMemory (integration)', () => {
 	});
 
 	it('round-trips remember -> recall through the memory provider', async () => {
-		const memory = new AgentMemoryMemory({
+		const memory = new AgentMemory({
 			agentMemory: client,
 			storage: new InMemoryStore(),
 			blocking: true,

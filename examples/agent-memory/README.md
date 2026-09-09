@@ -1,24 +1,24 @@
 # agent-memory
 
-Standalone **Mastra × AgentMemory**: agent memory, explicit memory tools, and
+Standalone **Mastra × Agent Memory**: agent memory, explicit memory tools, and
 document RAG backed by SurrealDB's
-[AgentMemory](https://surrealdb.com/platform/agentMemory) platform via
-`@surrealdb/mastra-ai/agentMemory`. No database to run — AgentMemory is a hosted service.
+[Agent Memory](https://surrealdb.com/agent-memory) platform via
+`@surrealdb/mastra-ai/agent-memory`. No database to run — Agent Memory is a hosted service.
 
 ## What it does
 
-- Uses `AgentMemoryMemory` as the agent's memory provider (no external store —
-  verbatim history is in-process, facts persist in AgentMemory).
+- Uses `AgentMemory` as the agent's memory provider (no external store —
+  verbatim history is in-process, facts persist in Agent Memory).
 - Registers `createAgentMemoryTools(...)` so the model can explicitly remember,
   recall, forget, fetch context, and search documents.
-- Runs a document search against the AgentMemory corpus.
+- Runs a document search against the Agent Memory corpus.
 
 > Want durable verbatim history too? Pass `storage: new SurrealDBStore({...})`
-> to `AgentMemoryMemory` — that combines Mastra × AgentMemory with Mastra × SurrealDB.
+> to `AgentMemory` — that combines Mastra × Agent Memory with Mastra × SurrealDB.
 
 ## Prerequisites
 
-- A AgentMemory endpoint, context and API key
+- An Agent Memory endpoint, context and API key
 - An Anthropic API key
 
 ## Run

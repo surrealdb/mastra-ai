@@ -3,7 +3,7 @@ import { Agent } from '@mastra/core/agent';
 import { Mastra } from '@mastra/core/mastra';
 import { Extractor, Memory } from '@mastra/memory';
 import { SurrealDBStore } from '@surrealdb/mastra-ai';
-import { AgentMemory, agentMemoryExtractedSink } from '@surrealdb/mastra-ai/agentMemory';
+import { AgentMemory, agentMemoryExtractedSink } from '@surrealdb/mastra-ai/agent-memory';
 import { z } from 'zod';
 
 // Observational Memory on SurrealDB: the observer agent compresses message
@@ -20,7 +20,7 @@ const store = new SurrealDBStore({
 	database: 'observational_memory',
 });
 
-// Optional: bridge extracted values into AgentMemory. Skipped when the
+// Optional: bridge extracted values into Agent Memory. Skipped when the
 // AGENT_MEMORY_* environment variables are absent.
 const endpoint = process.env['AGENT_MEMORY_ENDPOINT'];
 const context = process.env['AGENT_MEMORY_CONTEXT'];

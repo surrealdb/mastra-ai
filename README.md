@@ -158,22 +158,22 @@ await store.close();
 
 This package supports three memory configurations. They solve different
 problems: Observational Memory manages the *context window* (compressing the
-active thread so long sessions don't blow the token budget), while AgentMemory is
+active thread so long sessions don't blow the token budget), while Agent Memory is
 a *context layer* (durable cross-session facts, semantic recall, profile, and
 documents, served from the cloud).
 
 | Setup | Use when | Context-window compression | Long-term cross-session memory |
 |---|---|---|---|
 | `Memory` (`@mastra/memory`) + `SurrealDBStore` | You want Mastra's native memory stack on your own SurrealDB — threads, working memory, Observational Memory, extractors | ✅ Observational Memory | Per-resource working memory; OM resource scope (experimental) |
-| `AgentMemoryMemory` | You want hosted fact extraction, semantic recall, and profile with zero memory infrastructure to run | ❌ (verbatim history) | ✅ AgentMemory |
-| `Memory` + `SurrealDBStore` + `agentMemoryExtractedSink` | You want both: OM keeps the active thread lean, and extracted facts land in your AgentMemory context layer | ✅ Observational Memory | ✅ AgentMemory (via the sink) |
+| `AgentMemory` | You want hosted fact extraction, semantic recall, and profile with zero memory infrastructure to run | ❌ (verbatim history) | ✅ Agent Memory |
+| `Memory` + `SurrealDBStore` + `agentMemoryExtractedSink` | You want both: OM keeps the active thread lean, and extracted facts land in your Agent Memory context layer | ✅ Observational Memory | ✅ Agent Memory (via the sink) |
 
 Notes:
 
 - Observational Memory is a feature of `@mastra/memory`'s `Memory` class; it
-  does not apply to `AgentMemoryMemory`.
+  does not apply to `AgentMemory`.
 - OM extractors run on the observer's existing LLM pass (no extra model call);
-  AgentMemory extraction runs server-side and doesn't spend your app's tokens.
+  Agent Memory extraction runs server-side and doesn't spend your app's tokens.
   The sink bridges the first into the second.
 
 ## Observational Memory & memory extractors
@@ -223,17 +223,17 @@ const memory = new Memory({
 });
 ```
 
-**Bridging extractors to AgentMemory.** AgentMemory already performs *server-side*
+**Bridging extractors to Agent Memory.** Agent Memory already performs *server-side*
 fact extraction (`remember(..., { infer })`); OM extractors are the
 *client-side* alternative. If you use both, `agentMemoryExtractedSink` pipes each
-extracted value into AgentMemory as an `onExtracted` hook. Values are stored as
+extracted value into Agent Memory as an `onExtracted` hook. Values are stored as
 literal facts (`infer: 'none'`) — extraction already happened client-side, so
-AgentMemory doesn't run inference over them again (pass
+Agent Memory doesn't run inference over them again (pass
 `remember: { infer: 'full' }` to re-infer anyway). Failures are swallowed so a
-AgentMemory outage never breaks the observation cycle:
+Agent Memory outage never breaks the observation cycle:
 
 ```ts
-import { AgentMemory, agentMemoryExtractedSink } from '@surrealdb/mastra-ai/agentMemory';
+import { AgentMemory, agentMemoryExtractedSink } from '@surrealdb/mastra-ai/agent-memory';
 
 const agentMemory = new AgentMemory({ endpoint, context, apiKey });
 
@@ -253,8 +253,8 @@ new Extractor({
 | [basic-agent](examples/basic-agent/) | Multi-turn agent conversation with SurrealDB memory |
 | [workflow-persistence](examples/workflow-persistence/) | Suspend/resume workflow with snapshot storage |
 | [rag-pipeline](examples/rag-pipeline/) | Vector similarity search with SurrealDB HNSW indexes |
-| [agent-memory](examples/agent-memory/) | Agent memory + tools + RAG backed by the AgentMemory platform |
-| [observational-memory](examples/observational-memory/) | Observational Memory + extractors on SurrealDB, bridged to AgentMemory |
+| [agent-memory](examples/agent-memory/) | Agent memory + tools + RAG backed by the Agent Memory platform |
+| [observational-memory](examples/observational-memory/) | Observational Memory + extractors on SurrealDB, bridged to Agent Memory |
 
 To run an example:
 
@@ -297,38 +297,38 @@ const results = await client.queryAll(
 
 See [examples/rag-pipeline](examples/rag-pipeline/) for a full working example.
 
-## AgentMemory memory (Mastra × AgentMemory)
+## Agent Memory (Mastra × Agent Memory)
 
-[AgentMemory](https://surrealdb.com/platform/agentMemory) is SurrealDB's hosted memory
+[Agent Memory](https://surrealdb.com/agent-memory) is SurrealDB's hosted memory
 platform — it extracts facts, recalls them semantically, and manages documents.
 It's a **separate, standalone integration** from the SurrealDB storage adapter
-above: AgentMemory is a hosted *service* (reached over REST with an API key), not a
-database you run. This package exposes it through the `@surrealdb/mastra-ai/agentMemory`
+above: Agent Memory is a hosted *service* (reached over REST with an API key), not a
+database you run. This package exposes it through the `@surrealdb/mastra-ai/agent-memory`
 subpath as a Mastra memory provider, a set of agent tools, and RAG helpers.
 
-Install `zod` alongside this package (the AgentMemory client ships with it):
+Install `zod` alongside this package (the Agent Memory client ships with it):
 
 ```sh
 bun add zod
 ```
 
-### `AgentMemoryMemory` provider
+### `AgentMemory` provider
 
-`AgentMemoryMemory` works standalone — no database required. Verbatim message
-history is kept in-process while AgentMemory handles fact extraction, semantic
-recall, and profile. Every AgentMemory call is guarded, so a service outage
+`AgentMemory` works standalone — no database required. Verbatim message
+history is kept in-process while Agent Memory handles fact extraction, semantic
+recall, and profile. Every Agent Memory call is guarded, so a service outage
 degrades gracefully to verbatim-only behaviour and never breaks the agent loop.
 
 ```ts
 import { Agent } from '@mastra/core/agent';
 import { anthropic } from '@ai-sdk/anthropic';
-import { AgentMemoryMemory } from '@surrealdb/mastra-ai/agentMemory';
+import { AgentMemory } from '@surrealdb/mastra-ai/agent-memory';
 
 const agent = new Agent({
   name: 'assistant',
   instructions: 'You are a helpful assistant with long-term memory.',
   model: anthropic('claude-sonnet-4-5'),
-  memory: new AgentMemoryMemory({
+  memory: new AgentMemory({
     endpoint: process.env.AGENT_MEMORY_ENDPOINT!,
     context: process.env.AGENT_MEMORY_CONTEXT!,
     apiKey: process.env.AGENT_MEMORY_API_KEY!,
@@ -337,7 +337,7 @@ const agent = new Agent({
 ```
 
 **Optional — combine with Mastra × SurrealDB.** Pass a Mastra store as the
-durable system-of-record for verbatim threads/messages/working memory; AgentMemory
+durable system-of-record for verbatim threads/messages/working memory; Agent Memory
 then layers on as the intelligence tier. Reuse this package's own adapter:
 
 ```ts
@@ -351,7 +351,7 @@ const store = new SurrealDBStore({
 });
 await store.init();
 
-const memory = new AgentMemoryMemory({
+const memory = new AgentMemory({
   endpoint: process.env.AGENT_MEMORY_ENDPOINT!,
   context: process.env.AGENT_MEMORY_CONTEXT!,
   apiKey: process.env.AGENT_MEMORY_API_KEY!,
@@ -359,14 +359,14 @@ const memory = new AgentMemoryMemory({
 });
 ```
 
-### AgentMemory tools
+### Agent Memory tools
 
-Let an agent call AgentMemory explicitly — store, recall, forget, fetch context,
+Let an agent call Agent Memory explicitly — store, recall, forget, fetch context,
 and search documents (RAG):
 
 ```ts
-import { AgentMemory } from '@surrealdb/mastra-ai/agentMemory';
-import { createAgentMemoryTools } from '@surrealdb/mastra-ai/agentMemory';
+import { AgentMemory } from '@surrealdb/mastra-ai/agent-memory';
+import { createAgentMemoryTools } from '@surrealdb/mastra-ai/agent-memory';
 
 const client = new AgentMemory({
   endpoint: process.env.AGENT_MEMORY_ENDPOINT!,
@@ -388,7 +388,7 @@ The toolset is `agentMemoryRemember`, `agentMemoryRecall`, `agentMemoryForget`,
 ### Documents / RAG
 
 ```ts
-import { ingestDocument, searchDocuments } from '@surrealdb/mastra-ai/agentMemory';
+import { ingestDocument, searchDocuments } from '@surrealdb/mastra-ai/agent-memory';
 
 await ingestDocument(client, { file, title: 'Handbook' });
 const results = await searchDocuments(client, { query: 'refund policy', k: 5 });
@@ -397,15 +397,15 @@ const results = await searchDocuments(client, { query: 'refund policy', k: 5 });
 ### Limitations
 
 - **Fact cleanup is best-effort.** Deleting a thread or messages removes the
-  verbatim rows exactly, but facts AgentMemory already derived cannot be surgically
+  verbatim rows exactly, but facts Agent Memory already derived cannot be surgically
   removed by message id.
-- **Automatic recall injection needs a query.** `AgentMemoryMemory.recall()` only
-  augments with AgentMemory hits when a `vectorSearchString` is supplied (this is
-  decoupled from Mastra's vector-based `semanticRecall`, since AgentMemory embeds
+- **Automatic recall injection needs a query.** `AgentMemory.recall()` only
+  augments with Agent Memory hits when a `vectorSearchString` is supplied (this is
+  decoupled from Mastra's vector-based `semanticRecall`, since Agent Memory embeds
   server-side). For agent-driven recall, prefer the `agentMemoryRecall` tool.
-- **Isolation is soft under a shared API key.** `resourceId` maps to AgentMemory
+- **Isolation is soft under a shared API key.** `resourceId` maps to Agent Memory
   scopes/labels, not a hard tenant boundary; use `client.onBehalfOf(principal)`
-  for stronger isolation. One client is pinned to one AgentMemory `context`.
+  for stronger isolation. One client is pinned to one Agent Memory `context`.
 
 See [examples/agent-memory](examples/agent-memory/) for a full example.
 

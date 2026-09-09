@@ -1,14 +1,17 @@
-import type { AgentMemory, AgentMemoryFileInput } from '@surrealdb/memory';
+import type {
+	AgentMemory as AgentMemoryClient,
+	AgentMemoryFileInput,
+} from '@surrealdb/memory';
 
 /**
- * Thin, dependency-free helpers over AgentMemory's `documents` namespace for RAG
+ * Thin, dependency-free helpers over Agent Memory's `documents` namespace for RAG
  * ingestion and retrieval pipelines. The retrieval helper ({@link searchDocuments})
  * is also exposed as the `agentMemorySearchDocuments` agent tool.
  */
 
-/** Ingest a document into the AgentMemory corpus. Returns the ingestion handle. */
+/** Ingest a document into the Agent Memory corpus. Returns the ingestion handle. */
 export function ingestDocument(
-	agentMemory: AgentMemory,
+	agentMemory: AgentMemoryClient,
 	options: { file: AgentMemoryFileInput; title?: string; mimeType?: string },
 ) {
 	return agentMemory.documents.upload(options);
@@ -19,7 +22,7 @@ export type DocumentQueryMode = 'hybrid' | 'vector' | 'bm25' | 'hybrid_graph';
 
 /** Hybrid/vector/BM25/graph search over the document corpus. */
 export function searchDocuments(
-	agentMemory: AgentMemory,
+	agentMemory: AgentMemoryClient,
 	options: { query: string; k?: number; mode?: DocumentQueryMode },
 ) {
 	return agentMemory.documents.query({
@@ -31,7 +34,7 @@ export function searchDocuments(
 
 /** List documents, optionally filtered by status/mime type. */
 export function listDocuments(
-	agentMemory: AgentMemory,
+	agentMemory: AgentMemoryClient,
 	options?: {
 		status?: string;
 		mimeType?: string;
@@ -43,6 +46,9 @@ export function listDocuments(
 }
 
 /** Delete a document from the corpus. */
-export function deleteDocument(agentMemory: AgentMemory, documentId: string) {
+export function deleteDocument(
+	agentMemory: AgentMemoryClient,
+	documentId: string,
+) {
 	return agentMemory.documents.delete(documentId);
 }

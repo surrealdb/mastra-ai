@@ -1,4 +1,7 @@
-import type { AgentMemory, RememberOptions } from '@surrealdb/memory';
+import type {
+	AgentMemory as AgentMemoryClient,
+	RememberOptions,
+} from '@surrealdb/memory';
 
 /**
  * Structural mirror of `@mastra/memory`'s `ExtractorOnExtractedContext`, so
@@ -20,7 +23,7 @@ export interface AgentMemoryExtractedContext<T = unknown> {
 
 export interface AgentMemoryExtractedSinkOptions<T = unknown> {
 	/**
-	 * Labels attached to the persisted AgentMemory rows, either as a static
+	 * Labels attached to the persisted Agent Memory rows, either as a static
 	 * `key=value` list or a per-extraction factory. Defaults to
 	 * `extractor=<slug>`, `threadId=<threadId>` and, when present,
 	 * `resourceId=<resourceId>`.
@@ -36,12 +39,12 @@ export interface AgentMemoryExtractedSinkOptions<T = unknown> {
 	 * Extra options forwarded to `agentMemory.remember` (scopes, sessionId,
 	 * memoryCategory, infer, ...). `infer` defaults to `'none'`: the value
 	 * was already extracted client-side by the Mastra extractor, so it is
-	 * stored as a literal fact instead of running AgentMemory's server-side
+	 * stored as a literal fact instead of running Agent Memory's server-side
 	 * inference over it again. Pass `infer: 'full'` to re-infer anyway.
 	 */
 	remember?: Omit<RememberOptions, 'labels'>;
 	/**
-	 * Called when the AgentMemory write fails. The sink never throws into the
+	 * Called when the Agent Memory write fails. The sink never throws into the
 	 * observation cycle. Defaults to `console.warn`.
 	 */
 	onError?: (error: unknown, context: AgentMemoryExtractedContext<T>) => void;
@@ -64,12 +67,12 @@ function defaultLabels(context: AgentMemoryExtractedContext): string[] {
 }
 
 /**
- * Bridges Mastra memory extractors to AgentMemory: returns an
+ * Bridges Mastra memory extractors to Agent Memory: returns an
  * `onExtracted`-compatible callback that persists each extracted value via
  * `agentMemory.remember`. Values are stored as literal facts (`infer: 'none'`)
  * since extraction already happened client-side — override via
  * `options.remember.infer`. Failures are swallowed (routed to `onError`) so a
- * AgentMemory outage never breaks the observation cycle, and the callback
+ * Agent Memory outage never breaks the observation cycle, and the callback
  * returns undefined so the extracted value is persisted unchanged by Mastra.
  *
  * ```ts
@@ -81,7 +84,7 @@ function defaultLabels(context: AgentMemoryExtractedContext): string[] {
  * ```
  */
 export function agentMemoryExtractedSink<T = unknown>(
-	agentMemory: AgentMemory,
+	agentMemory: AgentMemoryClient,
 	options: AgentMemoryExtractedSinkOptions<T> = {},
 ): (context: AgentMemoryExtractedContext<T>) => Promise<void> {
 	const {

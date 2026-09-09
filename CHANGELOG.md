@@ -74,8 +74,8 @@ Initial release.
 - Conversation memory: threads, messages, and working memory.
 - Workflow suspend/resume with atomic snapshot storage.
 - HNSW vector indexes for RAG without a separate vector database.
-- AgentMemory integration under the `@surrealdb/mastra-ai/agentMemory` subpath:
-  `AgentMemoryMemory`, `createAgentMemoryTools`, and document/RAG helpers.
+- Agent Memory integration under the `@surrealdb/mastra-ai/agent-memory` subpath:
+  `AgentMemory`, `createAgentMemoryTools`, and document/RAG helpers.
 
 [1.0.0-beta.1]: https://github.com/surrealdb/mastra-ai/releases/tag/v1.0.0-beta.1
 [0.2.0]: https://github.com/surrealdb/mastra-ai/releases/tag/v0.2.0

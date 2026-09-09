@@ -1,9 +1,12 @@
 import type { MastraDBMessage } from '@mastra/core/agent';
 import type { StorageThreadType } from '@mastra/core/memory';
 import { InMemoryStore } from '@mastra/core/storage';
-import { type AgentMemory, AgentMemoryError } from '@surrealdb/memory';
+import {
+	type AgentMemory as AgentMemoryClient,
+	AgentMemoryError,
+} from '@surrealdb/memory';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { AgentMemoryMemory } from '../agent-memory/memory.js';
+import { AgentMemory } from '../agent-memory/memory.js';
 
 type Calls = {
 	sessionsCreate: unknown[];
@@ -14,8 +17,8 @@ type Calls = {
 };
 
 function makeFakeAgentMemory(
-	overrides: Partial<Record<keyof AgentMemory, unknown>> = {},
-): { agentMemory: AgentMemory; calls: Calls } {
+	overrides: Partial<Record<keyof AgentMemoryClient, unknown>> = {},
+): { agentMemory: AgentMemoryClient; calls: Calls } {
 	const calls: Calls = {
 		sessionsCreate: [],
 		rememberMany: [],
@@ -66,7 +69,7 @@ function makeFakeAgentMemory(
 		}),
 		...overrides,
 	};
-	return { agentMemory: fake as unknown as AgentMemory, calls };
+	return { agentMemory: fake as unknown as AgentMemoryClient, calls };
 }
 
 function textMsg(
@@ -93,14 +96,14 @@ const thread: StorageThreadType = {
 	updatedAt: new Date(),
 };
 
-describe('AgentMemoryMemory', () => {
+describe('AgentMemory', () => {
 	let calls: Calls;
-	let memory: AgentMemoryMemory;
+	let memory: AgentMemory;
 
 	beforeEach(async () => {
 		const fake = makeFakeAgentMemory();
 		calls = fake.calls;
-		memory = new AgentMemoryMemory({
+		memory = new AgentMemory({
 			agentMemory: fake.agentMemory,
 			storage: new InMemoryStore(),
 			agentMemoryRecall: { topK: 3 },
@@ -108,7 +111,7 @@ describe('AgentMemoryMemory', () => {
 		await memory.saveThread({ thread });
 	});
 
-	it('creates a AgentMemory session lazily on saveThread and caches it', async () => {
+	it('creates an Agent Memory session lazily on saveThread and caches it', async () => {
 		expect(calls.sessionsCreate.length).toBe(1);
 		const saved = await memory.getThreadById({ threadId: 'thread-1' });
 		expect(
@@ -134,7 +137,7 @@ describe('AgentMemoryMemory', () => {
 		expect(batch).toEqual([{ role: 'user', content: 'My name is Alice' }]);
 	});
 
-	it('recall merges verbatim history with synthesized AgentMemory hits', async () => {
+	it('recall merges verbatim history with synthesized Agent Memory hits', async () => {
 		await memory.saveMessages({ messages: [textMsg('m1', 'user', 'hi')] });
 		const res = await memory.recall({
 			threadId: 'thread-1',
@@ -150,7 +153,7 @@ describe('AgentMemoryMemory', () => {
 		expect(ids[0]).toBe('agentMemory:h1');
 	});
 
-	it('does not call AgentMemory recall when no vectorSearchString', async () => {
+	it('does not call AgentMemoryClient recall when no vectorSearchString', async () => {
 		await memory.saveMessages({ messages: [textMsg('m1', 'user', 'hi')] });
 		const res = await memory.recall({
 			threadId: 'thread-1',
@@ -160,13 +163,13 @@ describe('AgentMemoryMemory', () => {
 		expect(res.messages.map((m) => m.id)).toEqual(['m1']);
 	});
 
-	it('guards AgentMemory failures so the local write still succeeds', async () => {
+	it('guards AgentMemoryClient failures so the local write still succeeds', async () => {
 		const fake = makeFakeAgentMemory({
 			rememberMany: async () => {
 				throw new AgentMemoryError({ status: 500, title: 'boom' });
 			},
 		});
-		const mem = new AgentMemoryMemory({
+		const mem = new AgentMemory({
 			agentMemory: fake.agentMemory,
 			storage: new InMemoryStore(),
 			blocking: true,

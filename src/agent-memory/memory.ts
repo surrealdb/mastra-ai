@@ -19,9 +19,12 @@ import {
 	type StorageListThreadsInput,
 	type StorageListThreadsOutput,
 } from '@mastra/core/storage';
-import { AgentMemory, AgentMemoryError } from '@surrealdb/memory';
 import {
-	type AgentMemoryMemoryConfig,
+	AgentMemory as AgentMemoryClient,
+	AgentMemoryError,
+} from '@surrealdb/memory';
+import {
+	type AgentMemoryConfig,
 	isAgentMemoryInstanceConfig,
 } from './config.js';
 
@@ -32,7 +35,7 @@ const AGENT_MEMORY_ID_PREFIX = 'agentMemory:';
 type TurnRole = 'user' | 'assistant' | 'system' | 'tool';
 type BatchMessage = { role: TurnRole; content: string };
 
-/** A Mastra role maps 1:1 onto a AgentMemory `TurnRole`; unknown roles fall back to user. */
+/** A Mastra role maps 1:1 onto an Agent Memory `TurnRole`; unknown roles fall back to user. */
 function mapRole(role: string): TurnRole {
 	switch (role) {
 		case 'user':
@@ -79,19 +82,19 @@ function isAgentMemorySynthetic(msg: MastraDBMessage): boolean {
 }
 
 /**
- * A {@link MastraMemory} provider backed by SurrealDB's AgentMemory memory platform.
+ * A {@link MastraMemory} provider backed by SurrealDB's Agent Memory platform.
  *
  * Works standalone — no database required. Verbatim threads/messages/working
- * memory are kept in an in-process store by default, while AgentMemory is layered
+ * memory are kept in an in-process store by default, while Agent Memory is layered
  * on as the intelligence tier (fact extraction, semantic recall, profile).
  * Pass a durable Mastra `storage` (e.g. this package's `SurrealDBStore`) to make
  * the verbatim record survive restarts.
  *
- * Every AgentMemory call is guarded, so a service failure degrades gracefully to
+ * Every Agent Memory call is guarded, so a service failure degrades gracefully to
  * verbatim-only behaviour and never breaks an agent's generate/stream loop.
  */
-export class AgentMemoryMemory extends MastraMemory {
-	readonly agentMemory: AgentMemory;
+export class AgentMemory extends MastraMemory {
+	readonly agentMemory: AgentMemoryClient;
 	private readonly scopePrefix: string;
 	private readonly blocking: boolean;
 	private readonly injectProfile: boolean;
@@ -102,10 +105,10 @@ export class AgentMemoryMemory extends MastraMemory {
 	private readonly sessionCache = new Map<string, string>();
 	private probe?: Promise<void>;
 
-	constructor(config: AgentMemoryMemoryConfig) {
+	constructor(config: AgentMemoryConfig) {
 		super({
 			id: config.id,
-			name: config.name ?? 'AgentMemoryMemory',
+			name: config.name ?? 'AgentMemory',
 			storage: config.storage ?? new InMemoryStore(),
 			options: config.options,
 		});
@@ -120,7 +123,7 @@ export class AgentMemoryMemory extends MastraMemory {
 		this.recallScope = typeof sr === 'object' ? sr.scope : undefined;
 		this.agentMemory = isAgentMemoryInstanceConfig(config)
 			? config.agentMemory
-			: new AgentMemory({
+			: new AgentMemoryClient({
 					endpoint: config.endpoint,
 					context: config.context,
 					apiKey: config.apiKey,
@@ -134,25 +137,25 @@ export class AgentMemoryMemory extends MastraMemory {
 		const store = await this.storage.getStore('memory');
 		if (!store) {
 			throw new Error(
-				'AgentMemoryMemory requires a storage adapter with a memory domain',
+				'AgentMemoryClient requires a storage adapter with a memory domain',
 			);
 		}
 		return store;
 	}
 
-	/** Wrap a AgentMemory call: catch every {@link AgentMemoryError} and degrade to `fallback`. */
+	/** Wrap an Agent Memory call: catch every {@link AgentMemoryError} and degrade to `fallback`. */
 	private async guard<T>(fn: () => Promise<T>, fallback: T): Promise<T> {
 		try {
 			return await fn();
 		} catch (err) {
 			if (err instanceof AgentMemoryError) {
 				this.logger?.warn?.(
-					`AgentMemory call failed (${err.status} ${err.title}); degrading gracefully`,
+					`AgentMemoryClient call failed (${err.status} ${err.title}); degrading gracefully`,
 				);
 				return fallback;
 			}
 			this.logger?.warn?.(
-				'AgentMemory call failed; degrading gracefully',
+				'AgentMemoryClient call failed; degrading gracefully',
 			);
 			return fallback;
 		}
@@ -200,7 +203,7 @@ export class AgentMemoryMemory extends MastraMemory {
 	}
 
 	/**
-	 * Resolve the AgentMemory session for a thread, creating one lazily. The
+	 * Resolve the Agent Memory session for a thread, creating one lazily. The
 	 * server-generated id is cached in-process and stashed on `thread.metadata`.
 	 */
 	private async ensureSession(
@@ -298,7 +301,7 @@ export class AgentMemoryMemory extends MastraMemory {
 		const store = await this.getMemoryStore();
 		const result = await store.saveMessages({ messages });
 
-		// Best-effort mirror into AgentMemory, grouped by thread; skip synthesized rows.
+		// Best-effort mirror into Agent Memory, grouped by thread; skip synthesized rows.
 		const byThread = new Map<string, MastraDBMessage[]>();
 		for (const msg of messages) {
 			if (isAgentMemorySynthetic(msg) || !msg.threadId) continue;
@@ -422,7 +425,7 @@ export class AgentMemoryMemory extends MastraMemory {
 			: [messageIds as unknown as string];
 		const store = await this.getMemoryStore();
 		await store.deleteMessages(ids);
-		// AgentMemory cannot delete facts by message id; verbatim delete is exact.
+		// Agent Memory cannot delete facts by message id; verbatim delete is exact.
 	}
 
 	async getWorkingMemory({
@@ -456,7 +459,7 @@ export class AgentMemoryMemory extends MastraMemory {
 		if (wm.template) return { format: 'markdown', content: wm.template };
 		if (wm.schema) {
 			this.logger?.warn?.(
-				'AgentMemoryMemory: schema-based working memory templates are not supported; use `template`',
+				'AgentMemoryClient: schema-based working memory templates are not supported; use `template`',
 			);
 		}
 		return null;
@@ -538,7 +541,7 @@ export class AgentMemoryMemory extends MastraMemory {
 	): Promise<StorageCloneThreadOutput> {
 		const store = await this.getMemoryStore();
 		const result = await store.cloneThread(args);
-		// Give the clone its own AgentMemory session, lazily on next write.
+		// Give the clone its own Agent Memory session, lazily on next write.
 		return result;
 	}
 
