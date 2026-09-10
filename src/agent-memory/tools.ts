@@ -1,13 +1,16 @@
 import { createTool } from '@mastra/core/tools';
-import { type Spectron, SpectronError } from '@surrealdb/spectron';
+import {
+	type AgentMemory as AgentMemoryClient,
+	AgentMemoryError,
+} from '@surrealdb/memory';
 import { z } from 'zod';
 
-/** Run a Spectron call for a tool, returning a structured error instead of throwing. */
+/** Run an Agent Memory call for a tool, returning a structured error instead of throwing. */
 async function safe<T>(fn: () => Promise<T>): Promise<T | { error: string }> {
 	try {
 		return await fn();
 	} catch (err) {
-		if (err instanceof SpectronError) {
+		if (err instanceof AgentMemoryError) {
 			return {
 				error: `${err.status} ${err.title}: ${err.detail ?? ''}`.trim(),
 			};
@@ -17,17 +20,17 @@ async function safe<T>(fn: () => Promise<T>): Promise<T | { error: string }> {
 }
 
 /**
- * Build a Mastra toolset that lets an agent call Spectron explicitly:
+ * Build a Mastra toolset that lets an agent call Agent Memory explicitly:
  * store facts, semantically recall memory, forget, fetch assembled context,
  * and search the document corpus (RAG).
  *
  * @example
- * const agent = new Agent({ ..., tools: createSpectronTools(client) });
+ * const agent = new Agent({ ..., tools: createAgentMemoryTools(client) });
  */
-export function createSpectronTools(spectron: Spectron) {
+export function createAgentMemoryTools(agentMemory: AgentMemoryClient) {
 	return {
-		spectronRemember: createTool({
-			id: 'spectron-remember',
+		agentMemoryRemember: createTool({
+			id: 'agent-memory-remember',
 			description:
 				'Persist a fact or note to long-term memory so it can be recalled later.',
 			inputSchema: z.object({
@@ -39,12 +42,12 @@ export function createSpectronTools(spectron: Spectron) {
 			}),
 			execute: async (input) =>
 				safe(() =>
-					spectron.remember(input.text, { labels: input.labels }),
+					agentMemory.remember(input.text, { labels: input.labels }),
 				),
 		}),
 
-		spectronRecall: createTool({
-			id: 'spectron-recall',
+		agentMemoryRecall: createTool({
+			id: 'agent-memory-recall',
 			description:
 				'Semantically recall facts and passages from long-term memory for a query.',
 			inputSchema: z.object({
@@ -58,15 +61,15 @@ export function createSpectronTools(spectron: Spectron) {
 			}),
 			execute: async (input) =>
 				safe(async () => {
-					const res = await spectron.recall(input.query, {
+					const res = await agentMemory.recall(input.query, {
 						k: input.k,
 					});
 					return { hits: res.hits };
 				}),
 		}),
 
-		spectronForget: createTool({
-			id: 'spectron-forget',
+		agentMemoryForget: createTool({
+			id: 'agent-memory-forget',
 			description: 'Forget memory matching a natural-language query.',
 			inputSchema: z.object({
 				query: z.string().describe('What to forget.'),
@@ -77,12 +80,12 @@ export function createSpectronTools(spectron: Spectron) {
 			}),
 			execute: async (input) =>
 				safe(() =>
-					spectron.forget(input.query, { purge: input.purge }),
+					agentMemory.forget(input.query, { purge: input.purge }),
 				),
 		}),
 
-		spectronContext: createTool({
-			id: 'spectron-context',
+		agentMemoryContext: createTool({
+			id: 'agent-memory-context',
 			description:
 				'Retrieve an assembled context block from memory for a query.',
 			inputSchema: z.object({
@@ -92,11 +95,11 @@ export function createSpectronTools(spectron: Spectron) {
 				k: z.number().int().positive().optional(),
 			}),
 			execute: async (input) =>
-				safe(() => spectron.context(input.query, { k: input.k })),
+				safe(() => agentMemory.context(input.query, { k: input.k })),
 		}),
 
-		spectronSearchDocuments: createTool({
-			id: 'spectron-search-documents',
+		agentMemorySearchDocuments: createTool({
+			id: 'agent-memory-search-documents',
 			description:
 				'Search the ingested document corpus (hybrid/vector/BM25) for relevant chunks.',
 			inputSchema: z.object({
@@ -109,7 +112,7 @@ export function createSpectronTools(spectron: Spectron) {
 			}),
 			execute: async (input) =>
 				safe(() =>
-					spectron.documents.query({
+					agentMemory.documents.query({
 						query: input.query,
 						k: input.k,
 						mode: input.mode,

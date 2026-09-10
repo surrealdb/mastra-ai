@@ -1,18 +1,18 @@
-import type { Spectron } from '@surrealdb/spectron';
+import type { AgentMemory } from '@surrealdb/memory';
 import { describe, expect, it, vi } from 'vitest';
 import {
-	type SpectronExtractedContext,
-	spectronExtractedSink,
-} from '../spectron/extractors.js';
+	type AgentMemoryExtractedContext,
+	agentMemoryExtractedSink,
+} from '../agent-memory/extractors.js';
 
-function makeSpectron() {
+function makeAgentMemory() {
 	const remember = vi.fn().mockResolvedValue({ facts: [] });
-	return { spectron: { remember } as unknown as Spectron, remember };
+	return { agentMemory: { remember } as unknown as AgentMemory, remember };
 }
 
 const context = (
-	overrides: Partial<SpectronExtractedContext> = {},
-): SpectronExtractedContext => ({
+	overrides: Partial<AgentMemoryExtractedContext> = {},
+): AgentMemoryExtractedContext => ({
 	source: 'observer',
 	threadId: 'thread-1',
 	resourceId: 'user-1',
@@ -21,10 +21,10 @@ const context = (
 	...overrides,
 });
 
-describe('spectronExtractedSink', () => {
+describe('agentMemoryExtractedSink', () => {
 	it('persists structured values as literal JSON facts with default labels', async () => {
-		const { spectron, remember } = makeSpectron();
-		const sink = spectronExtractedSink(spectron);
+		const { agentMemory, remember } = makeAgentMemory();
+		const sink = agentMemoryExtractedSink(agentMemory);
 
 		await sink(context());
 
@@ -43,8 +43,8 @@ describe('spectronExtractedSink', () => {
 	});
 
 	it('passes string values through unchanged and omits missing resourceId', async () => {
-		const { spectron, remember } = makeSpectron();
-		const sink = spectronExtractedSink(spectron);
+		const { agentMemory, remember } = makeAgentMemory();
+		const sink = agentMemoryExtractedSink(agentMemory);
 
 		await sink(
 			context({ current: 'plain text fact', resourceId: undefined }),
@@ -57,12 +57,12 @@ describe('spectronExtractedSink', () => {
 	});
 
 	it('skips the write when format returns null or the value is nullish', async () => {
-		const { spectron, remember } = makeSpectron();
+		const { agentMemory, remember } = makeAgentMemory();
 
-		await spectronExtractedSink(spectron)(
+		await agentMemoryExtractedSink(agentMemory)(
 			context({ current: undefined as unknown as string }),
 		);
-		await spectronExtractedSink(spectron, { format: () => null })(
+		await agentMemoryExtractedSink(agentMemory, { format: () => null })(
 			context(),
 		);
 
@@ -70,9 +70,9 @@ describe('spectronExtractedSink', () => {
 	});
 
 	it('supports custom labels (static and factory) and remember options', async () => {
-		const { spectron, remember } = makeSpectron();
+		const { agentMemory, remember } = makeAgentMemory();
 
-		await spectronExtractedSink(spectron, {
+		await agentMemoryExtractedSink(agentMemory, {
 			labels: ['source=om'],
 			remember: { memoryCategory: 'profile', sessionId: 'sess-1' },
 		})(context());
@@ -83,7 +83,7 @@ describe('spectronExtractedSink', () => {
 			labels: ['source=om'],
 		});
 
-		await spectronExtractedSink(spectron, {
+		await agentMemoryExtractedSink(agentMemory, {
 			labels: (ctx) => [
 				`slug=${ctx.extractor.slug}`,
 				`src=${ctx.source}`,
@@ -96,9 +96,9 @@ describe('spectronExtractedSink', () => {
 	});
 
 	it('allows overriding the infer mode for server-side re-inference', async () => {
-		const { spectron, remember } = makeSpectron();
+		const { agentMemory, remember } = makeAgentMemory();
 
-		await spectronExtractedSink(spectron, {
+		await agentMemoryExtractedSink(agentMemory, {
 			remember: { infer: 'full' },
 		})(context());
 
@@ -113,23 +113,25 @@ describe('spectronExtractedSink', () => {
 	});
 
 	it('never throws into the observation cycle; routes failures to onError', async () => {
-		const remember = vi.fn().mockRejectedValue(new Error('spectron down'));
-		const spectron = { remember } as unknown as Spectron;
+		const remember = vi
+			.fn()
+			.mockRejectedValue(new Error('agentMemory down'));
+		const agentMemory = { remember } as unknown as AgentMemory;
 		const onError = vi.fn();
 
 		await expect(
-			spectronExtractedSink(spectron, { onError })(context()),
+			agentMemoryExtractedSink(agentMemory, { onError })(context()),
 		).resolves.toBeUndefined();
 
 		expect(onError).toHaveBeenCalledTimes(1);
 		expect((onError.mock.calls[0]?.[0] as Error).message).toBe(
-			'spectron down',
+			'agentMemory down',
 		);
 
 		// default onError only warns
 		const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 		await expect(
-			spectronExtractedSink(spectron)(context()),
+			agentMemoryExtractedSink(agentMemory)(context()),
 		).resolves.toBeUndefined();
 		expect(warn).toHaveBeenCalled();
 		warn.mockRestore();

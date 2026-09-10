@@ -1,11 +1,14 @@
-import type { RememberOptions, Spectron } from '@surrealdb/spectron';
+import type {
+	AgentMemory as AgentMemoryClient,
+	RememberOptions,
+} from '@surrealdb/memory';
 
 /**
  * Structural mirror of `@mastra/memory`'s `ExtractorOnExtractedContext`, so
  * the sink can be passed to an `Extractor`'s `onExtracted` hook without this
  * package depending on `@mastra/memory`.
  */
-export interface SpectronExtractedContext<T = unknown> {
+export interface AgentMemoryExtractedContext<T = unknown> {
 	/** Which observational-memory agent produced the value. */
 	source: 'observer' | 'reflector';
 	threadId: string;
@@ -18,43 +21,43 @@ export interface SpectronExtractedContext<T = unknown> {
 	current: T;
 }
 
-export interface SpectronExtractedSinkOptions<T = unknown> {
+export interface AgentMemoryExtractedSinkOptions<T = unknown> {
 	/**
-	 * Labels attached to the persisted Spectron rows, either as a static
+	 * Labels attached to the persisted Agent Memory rows, either as a static
 	 * `key=value` list or a per-extraction factory. Defaults to
 	 * `extractor=<slug>`, `threadId=<threadId>` and, when present,
 	 * `resourceId=<resourceId>`.
 	 */
-	labels?: string[] | ((context: SpectronExtractedContext<T>) => string[]);
+	labels?: string[] | ((context: AgentMemoryExtractedContext<T>) => string[]);
 	/**
 	 * Formats the extracted value into the text passed to
-	 * `spectron.remember`. Return null/empty to skip the write. Defaults to
+	 * `agentMemory.remember`. Return null/empty to skip the write. Defaults to
 	 * passing strings through and JSON-stringifying everything else.
 	 */
-	format?: (context: SpectronExtractedContext<T>) => string | null;
+	format?: (context: AgentMemoryExtractedContext<T>) => string | null;
 	/**
-	 * Extra options forwarded to `spectron.remember` (scopes, sessionId,
+	 * Extra options forwarded to `agentMemory.remember` (scopes, sessionId,
 	 * memoryCategory, infer, ...). `infer` defaults to `'none'`: the value
 	 * was already extracted client-side by the Mastra extractor, so it is
-	 * stored as a literal fact instead of running Spectron's server-side
+	 * stored as a literal fact instead of running Agent Memory's server-side
 	 * inference over it again. Pass `infer: 'full'` to re-infer anyway.
 	 */
 	remember?: Omit<RememberOptions, 'labels'>;
 	/**
-	 * Called when the Spectron write fails. The sink never throws into the
+	 * Called when the Agent Memory write fails. The sink never throws into the
 	 * observation cycle. Defaults to `console.warn`.
 	 */
-	onError?: (error: unknown, context: SpectronExtractedContext<T>) => void;
+	onError?: (error: unknown, context: AgentMemoryExtractedContext<T>) => void;
 }
 
-function defaultFormat(context: SpectronExtractedContext): string | null {
+function defaultFormat(context: AgentMemoryExtractedContext): string | null {
 	const value = context.current;
 	if (value == null) return null;
 	if (typeof value === 'string') return value;
 	return JSON.stringify(value);
 }
 
-function defaultLabels(context: SpectronExtractedContext): string[] {
+function defaultLabels(context: AgentMemoryExtractedContext): string[] {
 	const labels = [
 		`extractor=${context.extractor.slug}`,
 		`threadId=${context.threadId}`,
@@ -64,33 +67,33 @@ function defaultLabels(context: SpectronExtractedContext): string[] {
 }
 
 /**
- * Bridges Mastra memory extractors to Spectron: returns an
+ * Bridges Mastra memory extractors to Agent Memory: returns an
  * `onExtracted`-compatible callback that persists each extracted value via
- * `spectron.remember`. Values are stored as literal facts (`infer: 'none'`)
+ * `agentMemory.remember`. Values are stored as literal facts (`infer: 'none'`)
  * since extraction already happened client-side — override via
  * `options.remember.infer`. Failures are swallowed (routed to `onError`) so a
- * Spectron outage never breaks the observation cycle, and the callback
+ * Agent Memory outage never breaks the observation cycle, and the callback
  * returns undefined so the extracted value is persisted unchanged by Mastra.
  *
  * ```ts
  * new Extractor({
  *   name: 'User profile',
  *   instructions: 'Extract stable user profile facts.',
- *   onExtracted: spectronExtractedSink(spectron),
+ *   onExtracted: agentMemoryExtractedSink(agentMemory),
  * });
  * ```
  */
-export function spectronExtractedSink<T = unknown>(
-	spectron: Spectron,
-	options: SpectronExtractedSinkOptions<T> = {},
-): (context: SpectronExtractedContext<T>) => Promise<void> {
+export function agentMemoryExtractedSink<T = unknown>(
+	agentMemory: AgentMemoryClient,
+	options: AgentMemoryExtractedSinkOptions<T> = {},
+): (context: AgentMemoryExtractedContext<T>) => Promise<void> {
 	const {
 		format = defaultFormat,
 		labels = defaultLabels,
 		remember,
 		onError = (error, context) =>
 			console.warn(
-				`[spectronExtractedSink] failed to persist extraction "${context.extractor.slug}":`,
+				`[agentMemoryExtractedSink] failed to persist extraction "${context.extractor.slug}":`,
 				error,
 			),
 	} = options;
@@ -102,7 +105,7 @@ export function spectronExtractedSink<T = unknown>(
 			const resolvedLabels = Array.isArray(labels)
 				? labels
 				: labels(context);
-			await spectron.remember(text, {
+			await agentMemory.remember(text, {
 				infer: 'none',
 				...remember,
 				labels: resolvedLabels,

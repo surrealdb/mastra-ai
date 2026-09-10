@@ -5,7 +5,7 @@
     "": {
       "name": "@surrealdb/mastra-ai",
       "dependencies": {
-        "@surrealdb/spectron": "^1.0.0-alpha.8",
+        "@surrealdb/memory": "^1.0.0-alpha.9",
         "surrealdb": "^2.0.8",
       },
       "devDependencies": {
@@ -200,7 +200,7 @@
 
     "@surrealdb/cbor": ["@surrealdb/cbor@2.0.0-alpha.4", "", {}, "sha512-l/hNZ3ZCOJq8rzwx1y5ZV/8b2bYCWdhGqRVY33Pu50NAHyAW5qLsMn3ZBkZow77mAKwNCsbDsRGnyYEuU95mjw=="],
 
-    "@surrealdb/spectron": ["@surrealdb/spectron@1.0.0-alpha.8", "", { "peerDependencies": { "typescript": "^5.0.0 || ^6.0.0" } }, "sha512-sDQUtI1Wr556ZW2WL8MBpr6k7PWFgjWpP5DQLho2MjjqbmXtixyV/ion9zmrUwb317o4jWiWWS3TTCRa+72nYA=="],
+    "@surrealdb/memory": ["@surrealdb/memory@1.0.0-alpha.9", "", { "peerDependencies": { "typescript": "^5.0.0 || ^6.0.0" } }, "sha512-tvFO3qJV1jwfUH8mZ7buLAWmOx0siko1uDVd/7pCRe5DqhTI0YMU27ecpRjjbXxvupWMhClIFrH2gfNoThWFVA=="],
 
     "@surrealdb/sqon": ["@surrealdb/sqon@0.1.0", "", { "dependencies": { "@surrealdb/cbor": "2.0.0-alpha.4", "uuidv7": "^1.0.1" }, "peerDependencies": { "tslib": "^2.6.3", "typescript": "^5.0.0" } }, "sha512-pooKLZ0W6mN8XHzJQavGOdfZOZksycmIjhwFwvG0kdCAt4I5U6KKPHcXQwFkTDNKFKFKdufczLRnzHapPIslQw=="],
 

@@ -1,6 +1,6 @@
 {
 	"name": "@surrealdb/mastra-ai",
-	"version": "1.0.0-beta.1",
+	"version": "1.0.0-beta.2",
 	"description": "SurrealDB storage adapter for Mastra AI",
 	"type": "module",
 	"sideEffects": false,
@@ -36,14 +36,14 @@
 				"default": "./dist/index.cjs"
 			}
 		},
-		"./spectron": {
+		"./agent-memory": {
 			"import": {
-				"types": "./dist/spectron/index.d.ts",
-				"default": "./dist/spectron/index.js"
+				"types": "./dist/agent-memory/index.d.ts",
+				"default": "./dist/agent-memory/index.js"
 			},
 			"require": {
-				"types": "./dist/spectron/index.d.cts",
-				"default": "./dist/spectron/index.cjs"
+				"types": "./dist/agent-memory/index.d.cts",
+				"default": "./dist/agent-memory/index.cjs"
 			}
 		},
 		"./package.json": "./package.json"
@@ -57,7 +57,7 @@
 		"bun": ">=1.0.0"
 	},
 	"dependencies": {
-		"@surrealdb/spectron": "^1.0.0-alpha.8",
+		"@surrealdb/memory": "^1.0.0-alpha.9",
 		"surrealdb": "^2.0.8"
 	},
 	"devDependencies": {
