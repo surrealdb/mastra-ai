@@ -2,9 +2,9 @@ import { Agent } from '@mastra/core/agent';
 import { Mastra } from '@mastra/core/mastra';
 import { anthropic } from '@ai-sdk/anthropic';
 import {
+	AgentMemory,
+	AgentMemoryClient,
 	createAgentMemoryTools,
-	AgentMemory,
-	AgentMemory,
 	searchDocuments,
 } from '@surrealdb/mastra-ai/agent-memory';
 
@@ -22,13 +22,13 @@ if (!endpoint || !context || !apiKey) {
 // Standalone Mastra x Agent Memory — no database to run. Facts and semantic recall
 // live in the hosted Agent Memory service; verbatim history is kept in-process.
 // (Pass `storage: new SurrealDBStore({...})` if you want durable verbatim history.)
-const agentMemory = new AgentMemory({ endpoint, context, apiKey });
+const agentMemory = new AgentMemoryClient({ endpoint, context, apiKey });
 
 const agent = new Agent({
 	name: 'assistant',
 	instructions:
-		'You are a helpful assistant with long-term memory backed by AgentMemory. ' +
-		'Use the agentMemoryRecall tool to look up what you know about the user before answering.',
+		'You are a helpful assistant with long-term memory backed by Agent Memory. ' +
+		'Use the agent-memory-recall tool to look up what you know about the user before answering.',
 	model: anthropic('claude-sonnet-4-5'),
 	// Automatic memory: messages are mirrored into Agent Memory for fact extraction.
 	memory: new AgentMemory({ agentMemory, blocking: true }),

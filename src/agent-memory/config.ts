@@ -5,7 +5,7 @@ import type { AgentMemory } from '@surrealdb/memory';
 /**
  * Options shared by every {@link AgentMemoryConfig} variant.
  *
- * `Agent Memory` is a hybrid: a durable {@link MastraCompositeStore} is the
+ * `AgentMemory` is a hybrid: a durable {@link MastraCompositeStore} is the
  * system-of-record for verbatim threads, messages and working memory, while
  * the Agent Memory client is layered on top as a best-effort intelligence tier
  * (fact extraction + semantic recall + profile).

@@ -3,7 +3,7 @@ import { Agent } from '@mastra/core/agent';
 import { Mastra } from '@mastra/core/mastra';
 import { Extractor, Memory } from '@mastra/memory';
 import { SurrealDBStore } from '@surrealdb/mastra-ai';
-import { AgentMemory, agentMemoryExtractedSink } from '@surrealdb/mastra-ai/agent-memory';
+import { AgentMemoryClient, agentMemoryExtractedSink } from '@surrealdb/mastra-ai/agent-memory';
 import { z } from 'zod';
 
 // Observational Memory on SurrealDB: the observer agent compresses message
@@ -27,7 +27,7 @@ const context = process.env['AGENT_MEMORY_CONTEXT'];
 const apiKey = process.env['AGENT_MEMORY_API_KEY'];
 const agentMemory =
 	endpoint && context && apiKey
-		? new AgentMemory({ endpoint, context, apiKey })
+		? new AgentMemoryClient({ endpoint, context, apiKey })
 		: undefined;
 
 const profileSchema = z.object({
